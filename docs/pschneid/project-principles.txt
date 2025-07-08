@@ -1,0 +1,44 @@
+DailyLearn Project Principles
+
+1. Code Quality
+   - Write modular, reusable code with clear separation of UI, logic, and data access
+   - Use TypeScript for type safety and better maintainability
+   - Follow Clean Code principles (readable code, meaningful names)
+
+2. User-Centered Design
+   - Focus on simple, intuitive usability and quick achievement of learning goals
+   - Consider accessibility (e.g., contrast, screen reader compatibility)
+
+3. Performance
+   - Minimize loading times through code splitting, lazy loading, and caching
+   - Mobile First Design with fast response times
+
+4. Security
+   - Secure password storage (bcrypt), secure JWT processing
+   - Protection against common web security vulnerabilities (XSS, CSRF, SQL Injection)
+   - GDPR compliance and data protection
+
+5. Scalability
+   - Design backend and data model to easily grow with new topics and user numbers
+   - Use cloud hosting that supports auto-scaling
+
+6. Testing and Automation
+   - Apply Test-Driven Development (TDD) where possible
+   - CI/CD pipeline for automated testing and deployment
+
+7. Payment Integration
+   - Implement secure and reliable payment processing (PCI DSS standards)
+   - Transparent communication with users about payments and subscriptions
+
+8. Maintainability and Extensibility
+   - Code and API documentation
+   - Separation of business logic and presentation
+   - Enable flexible content management through admin interface
+
+9. UX & Gamification
+   - Motivate users through streaks, badges, progress indicators
+   - Design push notifications to be non-intrusive
+
+10. Offline Support
+    - Users should have access to the last learning content even without internet
+    - Reliable synchronization when returning online 

@@ -1,0 +1,52 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Principles:
+
+1. Codequalität
+   - Schreibe modularen, wiederverwendbaren Code mit klarer Trennung von UI, Logik und Datenzugriff
+   - Nutze TypeScript für Typensicherheit und bessere Wartbarkeit
+   - Halte dich an Clean-Code-Prinzipien (lesbarer Code, aussagekräftige Namen)
+
+2. Nutzerzentrierung
+   - Fokus auf einfache, intuitive Bedienbarkeit und schnelles Erreichen der Lernziele
+   - Barrierefreiheit berücksichtigen (z.B. Kontrast, Screenreader-Kompatibilität)
+
+3. Performance
+   - Ladezeiten minimieren durch Code Splitting, Lazy Loading und Caching
+   - Mobile First Design mit schnellen Reaktionszeiten
+
+4. Sicherheit
+   - Sichere Passwortspeicherung (bcrypt), sichere JWT-Verarbeitung
+   - Schutz vor gängigen Web-Sicherheitslücken (XSS, CSRF, SQL Injection)
+   - DSGVO-Konformität und Datenschutz gewährleisten
+
+5. Skalierbarkeit
+   - Backend und Datenmodell so entwerfen, dass einfach neue Themen und Nutzerzahlen wachsen können
+   - Cloud Hosting nutzen, das Auto-Scaling unterstützt
+
+6. Testing und Automatisierung
+   - Test-Driven Development (TDD) wo möglich anwenden
+   - CI/CD-Pipeline für automatisiertes Testen und Deployen
+
+7. Zahlungsintegration
+   - Zahlungsabwicklung sicher und zuverlässig gestalten (PCI DSS Standards beachten)
+   - Transparente Kommunikation mit Nutzern über Zahlungen und Abos
+
+8. Wartbarkeit und Erweiterbarkeit
+   - Dokumentation des Codes und APIs
+   - Trennung von Business-Logik und Präsentation
+   - Flexible Content-Pflege durch Admin-Interface ermöglichen
+
+9. UX & Gamification
+   - Nutzer motivieren durch Streaks, Badges, Fortschrittsanzeigen
+   - Push-Benachrichtigungen nicht zu aufdringlich gestalten
+
+10. Offline Support
+    - Nutzer sollen auch ohne Internet Zugang zum letzten Lerninhalt haben
+
+    - Synchronisierung bei Online-Rückkehr zuverlässig gestalten
+
+11. Verwende moeglichst nie Hardcode-values. Verwenden wenn moeglich immer Werte aus der Datenbank. Lege diese Werte in der Datenbank an.

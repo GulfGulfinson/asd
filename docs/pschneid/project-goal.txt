@@ -1,0 +1,19 @@
+DailyLearn Project Goal
+
+Develop a professional, performant, and appealing web application called "DailyLearn" that provides private customers with daily short, didactically prepared learning content on freely chosen topics.
+
+Core Features:
+- Daily delivery of short learning lessons (text, image, optional audio/video)
+- Interactive quiz modules for knowledge reinforcement
+- Progress tracking and streak monitoring for user motivation
+- User registration, login, and profile management
+- Flexible selection and management of learning topics
+- Integrated subscription payment system for premium features
+- Push notifications as learning reminders
+- Offline content availability (download or cache)
+- Responsive, modern UI/UX for web and mobile (PWA or React Native)
+- Fast loading times and high stability
+- Data protection compliant (GDPR) and secure data processing
+- Complete functionality (cookies, legal notices)
+
+Target: A market-ready product that can be immediately deployed and hosted, enabling easy scaling. 

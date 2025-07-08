@@ -1,0 +1,58 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Steps:
+
+1. Projektinitialisierung
+   - Erstelle ein neues React- (für Web) oder React Native- (für Mobile) Projekt mit TypeScript
+   - Integriere TailwindCSS für schnelles Styling
+   - Richte Routing (React Router oder vergleichbar) und State Management (z.B. Redux Toolkit) ein
+
+2. UI-Design und Prototyping
+   - Erstelle Wireframes für Landingpage, Lernübersicht, Quiz, Profil, Abo-Seite
+   - Entwickle erste UI-Komponenten (Header, Footer, Buttons, Formulare)
+   - Stelle Responsive Design sicher (Mobile First)
+
+3. Backend Setup
+   - Erstelle Node.js + Express Backend mit TypeScript
+   - Baue User Authentifizierung mit JWT und Passwort-Hashing (bcrypt)
+   - Verbinde eine Datenbank (MongoDB oder PostgreSQL) für User-Daten, Lernfortschritt, Content und weitere
+
+4. Lerninhalte-Management
+   - Entwickle Datenmodell für Lernlektionen, Themen, Quizfragen und weitere
+   - Implementiere API-Endpunkte zum Abruf der täglichen Lektionen und Speicherung der Antworten
+   - Baue Admin-Interface zur Pflege und Erweiterung von Lerninhalten (optional)
+
+5. Quiz- und Interaktivitätsfunktionen
+   - Implementiere Quiz-Komponenten mit Multiple Choice, Ergebnis-Feedback
+   - Speichere Quiz-Ergebnisse und aktualisiere Fortschritts-Status
+
+6. Zahlungsintegration
+   - Integriere Stripe-Checkout für Abonnements (monatlich/jährlich)
+   - Verwalte Benutzerstatus (Premium vs. Free) im Backend
+   - Implementiere sichere Webhooks für Zahlungsbestätigung und Statusänderungen
+
+7. Push-Benachrichtigungen
+   - Baue Push-Service (z.B. Firebase Cloud Messaging)
+   - Implementiere Nutzer-Permission-Request und Reminder-Notifications
+
+8. Offline-Funktionalität
+   - Implementiere Service Worker (PWA) oder Cache-Mechanismen in React Native
+   - Ermögliche Download von Inhalten für Offline-Nutzung
+
+9. Testing & Qualitätssicherung
+   - Schreibe Unit-Tests für Backend und Frontend (Jest, React Testing Library)
+   - Führe Integrationstests durch
+   - Automatisiere Tests im CI/CD Prozess
+
+10. Deployment & Hosting
+    - Konfiguriere Hosting auf Vercel, Netlify oder AWS Amplify
+    - Automatisiere Deployment über GitHub Actions oder andere CI/CD Tools
+    - Richte Umgebungsvariablen, API Keys und Secrets sicher ein
+
+11. Monitoring & Wartung
+    - Implementiere Logging und Error Tracking (Sentry o. Ä.)
+    - Plane regelmäßige Updates und Content-Erweiterungen
+

@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Goal:
+Entwickle eine professionelle, performante und ansprechende Web-App namens "DailyLearn", die Privatkunden täglich kurze, didaktisch aufbereitete Lerninhalte zu frei wählbaren Themen liefert.
+
+Die App soll folgende Kernfunktionen besitzen:
+- Tägliche Ausspielung einer kurzen Lernlektion (Text, Bild, ggf. Audio/Video)
+- Interaktive Quiz-Module zur Festigung des Gelernten
+- Fortschrittsanzeige und Streak-Tracking zur Nutzer-Motivation
+- Nutzer-Registrierung, Login und Profilverwaltung
+- Flexible Auswahl und Verwaltung von Lern-Themen
+- Integriertes Abonnement-Zahlungssystem für Premium-Funktionen
+- Push-Benachrichtigungen als Lern-Erinnerungen
+- Offline-Verfügbarkeit von Inhalten (z.B. Download oder Cache)
+- Responsive, moderne UI/UX für Web und Mobile (PWA oder React Native)
+- Schnelle Ladezeiten und hohe Stabilität
+- Datenschutzkonform (DSGVO) und sichere Datenverarbeitung
+- Vollstaendige Funktionalitaet (Cookies, Impressum)
+- Verwende tailwind v2 und verwende git. Verwende eine etwas aeltere Version von React, die kompatibel mit tailwind v2 ist.
+Ziel ist ein marktreifes Produkt, das sofort eingesetzt und gehostet werden kann, und eine einfache Skalierung ermöglicht.
+
