@@ -295,3 +295,145 @@ export const getUserProgress = async (
     next(error);
   }
 }; 
+
+// Get lesson statistics
+export const getLessonStats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    const lesson = await Lesson.findById(id);
+    
+    if (!lesson) {
+      res.status(404).json({
+        success: false,
+        error: 'Lesson not found'
+      });
+      return;
+    }
+    
+    // Get detailed statistics
+    const [
+      uniqueViewers,
+      completedUsers,
+      totalLikes,
+      averageTimeSpent,
+      difficultyStats
+    ] = await Promise.all([
+      // Count unique users who viewed this lesson
+      LessonProgress.distinct('userId', { lessonId: id }),
+      
+      // Count users who completed this lesson
+      LessonProgress.countDocuments({ 
+        lessonId: id, 
+        status: 'completed' 
+      }),
+      
+      // Count total likes
+      LessonProgress.countDocuments({ 
+        lessonId: id, 
+        liked: true 
+      }),
+      
+      // Calculate average time spent
+      LessonProgress.aggregate([
+        { $match: { lessonId: lesson._id, timeSpent: { $gt: 0 } } },
+        {
+          $group: {
+            _id: null,
+            averageTime: { $avg: '$timeSpent' },
+            totalTime: { $sum: '$timeSpent' }
+          }
+        }
+      ]),
+      
+      // Get completion rate by difficulty preference
+      LessonProgress.aggregate([
+        { $match: { lessonId: lesson._id } },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        { $unwind: '$user' },
+        {
+          $group: {
+            _id: '$user.preferences.difficulty',
+            completed: {
+              $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+            },
+            total: { $sum: 1 }
+          }
+        }
+      ])
+    ]);
+    
+    const uniqueViewersCount = uniqueViewers.length;
+    const completionRate = uniqueViewersCount > 0 ? (completedUsers / uniqueViewersCount) * 100 : 0;
+    const timeStats = averageTimeSpent[0] || { averageTime: 0, totalTime: 0 };
+    
+    res.json({
+      success: true,
+      data: {
+        viewsCount: lesson.viewsCount,
+        uniqueViewers: uniqueViewersCount,
+        likesCount: totalLikes,
+        completedUsers,
+        completionRate: Math.round(completionRate * 100) / 100,
+        averageTimeSpent: Math.round(timeStats.averageTime || 0),
+        totalTimeSpent: timeStats.totalTime || 0,
+        difficultyBreakdown: difficultyStats,
+        lastUpdated: new Date()
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Share lesson (track sharing statistics)
+export const shareLesson = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    // Note: platform and method could be used for analytics in the future
+    // const { platform, method } = req.body; // e.g., platform: 'social', method: 'link'
+    
+    const lesson = await Lesson.findById(id);
+    
+    if (!lesson) {
+      res.status(404).json({
+        success: false,
+        error: 'Lesson not found'
+      });
+      return;
+    }
+    
+    // Log sharing event (you could create a separate ShareEvent model if needed)
+    // For now, we'll just return success and sharing data
+    
+    const shareData = {
+      url: `${process.env.FRONTEND_URL}/lessons/${id}`,
+      title: lesson.title,
+      description: lesson.summary,
+      image: lesson.imageUrl
+    };
+    
+    res.json({
+      success: true,
+      data: shareData,
+      message: 'Lesson shared successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}; 

@@ -18,6 +18,7 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -29,6 +30,7 @@ const Register: React.FC = () => {
   // Clear error when component mounts
   useEffect(() => {
     clearError();
+    setValidationError(null);
   }, [clearError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,31 +39,78 @@ const Register: React.FC = () => {
       [e.target.name]: e.target.value,
     });
     clearError();
+    setValidationError(null);
   };
 
   const validateForm = () => {
+    // Check if passwords match
     if (formData.password !== formData.confirmPassword) {
       return 'Passwords do not match';
     }
+    
+    // Check password length
     if (formData.password.length < 6) {
       return 'Password must be at least 6 characters long';
     }
+    
+    // Check password complexity (must have letter and number)
+    const hasLetter = /[a-zA-Z]/.test(formData.password);
+    const hasNumber = /\d/.test(formData.password);
+    
+    if (!hasLetter || !hasNumber) {
+      return 'Password must contain at least one letter and one number';
+    }
+    
+    // Check username format
+    if (formData.username.length < 3) {
+      return 'Username must be at least 3 characters long';
+    }
+    
+    if (formData.username.length > 20) {
+      return 'Username cannot be longer than 20 characters';
+    }
+    
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(formData.username)) {
+      return 'Username can only contain letters, numbers, and underscores';
+    }
+    
+    // Check name lengths
+    if (formData.firstName.trim().length === 0) {
+      return 'First name is required';
+    }
+    
+    if (formData.lastName.trim().length === 0) {
+      return 'Last name is required';
+    }
+    
+    if (formData.firstName.length > 50) {
+      return 'First name cannot be longer than 50 characters';
+    }
+    
+    if (formData.lastName.length > 50) {
+      return 'Last name cannot be longer than 50 characters';
+    }
+    
     return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validationError = validateForm();
-    if (validationError) {
-      // Handle validation error appropriately
+    const validationErrorMessage = validateForm();
+    if (validationErrorMessage) {
+      setValidationError(validationErrorMessage);
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      await register(formData);
+      const result = await register(formData);
+      if (result.type === 'auth/register/fulfilled') {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err) {
       // Error is handled by the auth context
     } finally {
@@ -105,9 +154,9 @@ const Register: React.FC = () => {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
+          {(error || validationError) && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {error}
+              {validationError || error}
             </div>
           )}
 
@@ -122,14 +171,11 @@ const Register: React.FC = () => {
                 type="text"
                 autoComplete="username"
                 required
-                className={`input ${error ? 'border-red-300' : ''}`}
+                className="input"
                 placeholder="Username"
                 value={formData.username}
                 onChange={handleChange}
               />
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
             </div>
 
             <div>
@@ -142,14 +188,11 @@ const Register: React.FC = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className={`input ${error ? 'border-red-300' : ''}`}
+                className="input"
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
               />
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
             </div>
 
             <div>
@@ -162,14 +205,11 @@ const Register: React.FC = () => {
                 type="text"
                 autoComplete="given-name"
                 required
-                className={`input ${error ? 'border-red-300' : ''}`}
+                className="input"
                 placeholder="First name"
                 value={formData.firstName}
                 onChange={handleChange}
               />
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
             </div>
 
             <div>
@@ -182,14 +222,11 @@ const Register: React.FC = () => {
                 type="text"
                 autoComplete="family-name"
                 required
-                className={`input ${error ? 'border-red-300' : ''}`}
+                className="input"
                 placeholder="Last name"
                 value={formData.lastName}
                 onChange={handleChange}
               />
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
             </div>
 
             <div className="relative">
@@ -202,7 +239,7 @@ const Register: React.FC = () => {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 required
-                className={`input pr-10 ${error ? 'border-red-300' : ''}`}
+                className="input pr-10"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
@@ -218,9 +255,6 @@ const Register: React.FC = () => {
                   <Eye className="h-5 w-5 text-gray-400" />
                 )}
               </button>
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
             </div>
 
             <div className="relative">
@@ -233,7 +267,7 @@ const Register: React.FC = () => {
                 type={showConfirmPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 required
-                className={`input pr-10 ${error ? 'border-red-300' : ''}`}
+                className="input pr-10"
                 placeholder="Confirm password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -249,9 +283,6 @@ const Register: React.FC = () => {
                   <Eye className="h-5 w-5 text-gray-400" />
                 )}
               </button>
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
             </div>
           </div>
 

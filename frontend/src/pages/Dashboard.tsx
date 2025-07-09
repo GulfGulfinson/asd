@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
-import { loadProgress, updateTodayStatus, saveProgress } from '../store/slices/progressSlice';
+import { loadProgress, updateTodayStatus } from '../store/slices/progressSlice';
 import { 
   Trophy, 
   Flame, 
@@ -10,7 +10,6 @@ import {
   Clock, 
   Award,
   TrendingUp,
-  Calendar,
   Star,
   Zap
 } from 'lucide-react';

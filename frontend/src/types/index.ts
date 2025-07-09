@@ -211,6 +211,13 @@ export interface ProfileForm {
 }
 
 // UI State Types
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 export interface UIState {
   loading: boolean;
   error: string | null;
@@ -234,6 +241,7 @@ export interface LessonState extends UIState {
   selectedLesson: Lesson | null;
   dailyLesson: Lesson | null;
   progress: LessonProgress[];
+  pagination: Pagination;
 }
 
 export interface QuizState extends UIState {

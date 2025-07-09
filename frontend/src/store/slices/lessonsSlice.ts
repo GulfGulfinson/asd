@@ -13,17 +13,51 @@ const initialState: LessonState = {
   loading: false,
   error: null,
   success: null,
+  pagination: {
+    page: 1,
+    limit: 12,
+    total: 0,
+    pages: 0
+  }
 };
 
 // Async thunks
 export const fetchLessons = createAsyncThunk(
   'lessons/fetchAll',
-  async (params: { theme?: string; difficulty?: string; limit?: number } = {}, { rejectWithValue }) => {
+  async (params: { themeId?: string; difficulty?: string; search?: string; page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.getAll(params);
-      return response.data.lessons;
+      return {
+        lessons: response.data.lessons || response.data.data?.lessons || [],
+        pagination: response.data.pagination || response.data.data?.pagination || {
+          page: params.page || 1,
+          limit: params.limit || 12,
+          total: 0,
+          pages: 0
+        }
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch lessons');
+    }
+  }
+);
+
+export const loadMoreLessons = createAsyncThunk(
+  'lessons/loadMore',
+  async (params: { themeId?: string; difficulty?: string; search?: string; page: number; limit?: number }, { rejectWithValue }) => {
+    try {
+      const response = await lessonsAPI.getAll(params);
+      return {
+        lessons: response.data.lessons || response.data.data?.lessons || [],
+        pagination: response.data.pagination || response.data.data?.pagination || {
+          page: params.page,
+          limit: params.limit || 12,
+          total: 0,
+          pages: 0
+        }
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to load more lessons');
     }
   }
 );
@@ -33,7 +67,7 @@ export const fetchLessonById = createAsyncThunk(
   async (lessonId: string, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.getById(lessonId);
-      return response.data.lesson;
+      return response.data.lesson || response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch lesson');
     }
@@ -45,7 +79,7 @@ export const fetchDailyLesson = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.getDailyLesson();
-      return response.data.lesson;
+      return response.data.lesson || response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch daily lesson');
     }
@@ -56,8 +90,8 @@ export const markLessonCompleted = createAsyncThunk(
   'lessons/markCompleted',
   async (lessonId: string, { rejectWithValue }) => {
     try {
-      const response = await lessonsAPI.markAsCompleted(lessonId);
-      return { lessonId, progress: response.data.progress };
+      const response = await lessonsAPI.markAsCompleted?.(lessonId);
+      return { lessonId, progress: response?.data.progress };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to mark lesson as completed');
     }
@@ -69,7 +103,7 @@ export const likeLesson = createAsyncThunk(
   async (lessonId: string, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.likeLesson(lessonId);
-      return { lessonId, lesson: response.data.lesson };
+      return { lessonId, lesson: response.data.lesson || response.data.data };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to like lesson');
     }
@@ -119,6 +153,15 @@ const lessonsSlice = createSlice({
         state.dailyLesson = { ...state.dailyLesson, ...updates };
       }
     },
+    resetLessons: (state) => {
+      state.lessons = [];
+      state.pagination = {
+        page: 1,
+        limit: 12,
+        total: 0,
+        pages: 0
+      };
+    }
   },
   extraReducers: (builder) => {
     // Fetch all lessons
@@ -129,10 +172,29 @@ const lessonsSlice = createSlice({
       })
       .addCase(fetchLessons.fulfilled, (state, action) => {
         state.loading = false;
-        state.lessons = action.payload;
+        state.lessons = action.payload.lessons;
+        state.pagination = action.payload.pagination;
         state.error = null;
       })
       .addCase(fetchLessons.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // Load more lessons
+    builder
+      .addCase(loadMoreLessons.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadMoreLessons.fulfilled, (state, action) => {
+        state.loading = false;
+        // Append new lessons to existing ones
+        state.lessons = [...state.lessons, ...action.payload.lessons];
+        state.pagination = action.payload.pagination;
+        state.error = null;
+      })
+      .addCase(loadMoreLessons.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
@@ -179,13 +241,15 @@ const lessonsSlice = createSlice({
         state.loading = false;
         state.success = 'Lesson marked as completed!';
         // Update progress
-        const existingProgressIndex = state.progress.findIndex(
-          p => p.lessonId === action.payload.lessonId
-        );
-        if (existingProgressIndex !== -1) {
-          state.progress[existingProgressIndex] = action.payload.progress;
-        } else {
-          state.progress.push(action.payload.progress);
+        if (action.payload.progress) {
+          const existingProgressIndex = state.progress.findIndex(
+            p => p.lessonId === action.payload.lessonId
+          );
+          if (existingProgressIndex !== -1) {
+            state.progress[existingProgressIndex] = action.payload.progress;
+          } else {
+            state.progress.push(action.payload.progress);
+          }
         }
         state.error = null;
       })
@@ -197,11 +261,10 @@ const lessonsSlice = createSlice({
     // Like lesson
     builder
       .addCase(likeLesson.pending, (state) => {
-        state.loading = true;
+        // Don't set loading for like action to avoid UI blocking
         state.error = null;
       })
       .addCase(likeLesson.fulfilled, (state, action) => {
-        state.loading = false;
         state.success = 'Lesson liked!';
         // Update lesson in all relevant places
         const { lessonId, lesson } = action.payload;
@@ -221,21 +284,21 @@ const lessonsSlice = createSlice({
         state.error = null;
       })
       .addCase(likeLesson.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
       });
   },
 });
 
-export const {
-  clearError,
-  clearSuccess,
-  clearMessages,
-  setCurrentLesson,
-  setSelectedLesson,
-  clearCurrentLesson,
-  clearSelectedLesson,
+export const { 
+  clearError, 
+  clearSuccess, 
+  clearMessages, 
+  setCurrentLesson, 
+  setSelectedLesson, 
+  clearCurrentLesson, 
+  clearSelectedLesson, 
   updateLessonInList,
+  resetLessons
 } = lessonsSlice.actions;
 
 export default lessonsSlice.reducer; 

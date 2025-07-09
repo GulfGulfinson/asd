@@ -88,8 +88,16 @@ export const themesAPI = {
 
 // Lessons API
 export const lessonsAPI = {
-  getAll: async (params?: { theme?: string; difficulty?: string; limit?: number }) => {
-    const response = await api.get('/lessons', { params });
+  getAll: async (params?: { themeId?: string; difficulty?: string; search?: string; page?: number; limit?: number }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.themeId) queryParams.append('themeId', params.themeId);
+    if (params?.difficulty) queryParams.append('difficulty', params.difficulty);
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    
+    const url = queryParams.toString() ? `/lessons?${queryParams.toString()}` : '/lessons';
+    const response = await api.get(url);
     return response.data;
   },
   
@@ -98,20 +106,48 @@ export const lessonsAPI = {
     return response.data;
   },
   
+  getToday: async () => {
+    const response = await api.get('/lessons/today');
+    return response.data;
+  },
+  
   getDailyLesson: async () => {
-    const response = await api.get('/lessons/daily');
+    const response = await api.get('/lessons/today');
+    return response.data;
+  },
+  
+  getLessonStats: async (id: string) => {
+    const response = await api.get(`/lessons/${id}/stats`);
+    return response.data;
+  },
+  
+  likeLesson: async (id: string) => {
+    const response = await api.post(`/lessons/${id}/like`);
+    return response.data;
+  },
+  
+  shareLesson: async (id: string, platform?: string, method?: string) => {
+    const response = await api.post(`/lessons/${id}/share`, { platform, method });
+    return response.data;
+  },
+  
+  updateProgress: async (id: string, progress: { readingProgress?: number; timeSpent?: number }) => {
+    const response = await api.post(`/lessons/${id}/progress`, progress);
+    return response.data;
+  },
+  
+  getUserProgress: async (id: string) => {
+    const response = await api.get(`/lessons/${id}/progress`);
     return response.data;
   },
   
   markAsCompleted: async (lessonId: string) => {
-    const response = await api.post(`/lessons/${lessonId}/complete`);
+    const response = await api.post(`/lessons/${lessonId}/progress`, { 
+      readingProgress: 100,
+      timeSpent: 0 // This would be calculated properly in a real implementation
+    });
     return response.data;
-  },
-  
-  likeLesson: async (lessonId: string) => {
-    const response = await api.post(`/lessons/${lessonId}/like`);
-    return response.data;
-  },
+  }
 };
 
 // Quizzes API

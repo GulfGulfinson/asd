@@ -5,7 +5,9 @@ import {
   getTodaysLesson,
   likeLesson,
   updateProgress,
-  getUserProgress
+  getUserProgress,
+  getLessonStats,
+  shareLesson
 } from '../controllers/lessonController';
 import { authenticate } from '../middleware/auth';
 
@@ -13,14 +15,14 @@ const router = Router();
 
 // Protected routes (must come first to avoid route conflicts)
 router.get('/today', authenticate, getTodaysLesson);
+router.post('/:id/like', authenticate, likeLesson);
+router.post('/:id/progress', authenticate, updateProgress);
+router.get('/:id/progress', authenticate, getUserProgress);
 
 // Public routes
 router.get('/', getAllLessons);
-
-// Parameterized routes (must come after specific routes)
 router.get('/:id', getLessonById);
-router.get('/:id/progress', authenticate, getUserProgress);
-router.post('/:id/like', authenticate, likeLesson);
-router.put('/:id/progress', authenticate, updateProgress);
+router.get('/:id/stats', getLessonStats);
+router.post('/:id/share', shareLesson);
 
 export default router; 

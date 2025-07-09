@@ -7,15 +7,11 @@ const QuizPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleQuizComplete = (score: number, passed: boolean) => {
-    // Handle quiz completion
+    // Handle quiz completion - just log it, let Quiz component show its own results
     console.log(`Quiz completed with score: ${score}%, passed: ${passed}`);
     
-    // Show completion message
-    if (passed) {
-      alert(`🎉 Herzlichen Glückwunsch!\n\nSie haben das Quiz mit ${score}% bestanden!\n\nIn der vollständigen App würde hier:\n• Der Fortschritt gespeichert\n• Badges vergeben\n• Zum nächsten Thema navigiert`);
-    } else {
-      alert(`📚 Nicht bestanden\n\nSie haben ${score}% erreicht.\n\nTipp: Wiederholen Sie die Lektion und versuchen Sie es erneut!`);
-    }
+    // The Quiz component will handle showing the results screen with proper UI
+    // No need for alerts here
   };
 
   const handleQuizClose = () => {

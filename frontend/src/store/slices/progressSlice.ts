@@ -313,9 +313,8 @@ const progressSlice = createSlice({
             shouldUnlock = highScoreQuizzes.length >= 10;
             break;
           case 'speed_learner':
-            const today = new Date().toDateString();
             const todayLessons = Object.values(state.lessonProgress).filter(p => 
-              p.completedAt && p.completedAt.toDateString() === today
+              p.completedAt && p.completedAt.toDateString() === new Date().toDateString()
             );
             shouldUnlock = todayLessons.length >= 5;
             break;
@@ -349,7 +348,6 @@ const progressSlice = createSlice({
     },
     
     updateTodayStatus: (state) => {
-      const today = new Date();
       state.todayCompleted = state.dailyStreak.lastActivityDate ? isToday(state.dailyStreak.lastActivityDate) : false;
     },
     
@@ -366,7 +364,12 @@ const progressSlice = createSlice({
       })
       .addCase(loadProgress.fulfilled, (state, action) => {
         state.loading = false;
-        return { ...state, ...action.payload };
+        state.lessonProgress = action.payload.lessonProgress || {};
+        state.dailyStreak = action.payload.dailyStreak || state.dailyStreak;
+        state.userStats = action.payload.userStats || state.userStats;
+        state.achievements = action.payload.achievements || [];
+        state.todayCompleted = action.payload.todayCompleted || false;
+        state.error = null;
       })
       .addCase(loadProgress.rejected, (state, action) => {
         state.loading = false;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Check, BookOpen, Clock } from 'lucide-react';
 
 export interface Slide {
@@ -21,14 +21,21 @@ interface SlideViewerProps {
   showProgress?: boolean;
 }
 
-const SlideViewer: React.FC<SlideViewerProps> = ({
+export interface SlideViewerRef {
+  resetPresentation: () => void;
+  goToSlide: (index: number) => void;
+  nextSlide: () => void;
+  prevSlide: () => void;
+}
+
+const SlideViewer = forwardRef<SlideViewerRef, SlideViewerProps>(({
   slides,
   lessonTitle,
   onSlideChange,
   onComplete,
   autoPlay = false,
   showProgress = true,
-}) => {
+}, ref) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [progress, setProgress] = useState(0);
@@ -69,6 +76,14 @@ const SlideViewer: React.FC<SlideViewerProps> = ({
   const togglePlayback = useCallback(() => {
     setIsPlaying(!isPlaying);
   }, [isPlaying]);
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    resetPresentation,
+    goToSlide,
+    nextSlide,
+    prevSlide,
+  }), [resetPresentation, goToSlide, nextSlide, prevSlide]);
 
   // Auto-advance slides when playing
   useEffect(() => {
@@ -379,6 +394,6 @@ const SlideViewer: React.FC<SlideViewerProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default SlideViewer; 

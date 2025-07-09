@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, User, Menu, X, Home, Layout, LogOut, LayoutDashboard } from 'lucide-react';
+import { BookOpen, User, Menu, X, LogOut, LayoutDashboard } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -15,10 +15,6 @@ const Navbar: React.FC = () => {
     setIsMobileMenuOpen(false);
   };
 
-  const isActivePath = (path: string) => {
-    return location.pathname === path;
-  };
-
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -26,7 +22,6 @@ const Navbar: React.FC = () => {
   const navigationItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Lektionen', href: '/lessons', icon: BookOpen },
-    { name: 'Profil', href: '/profile', icon: User },
   ];
 
   return (
@@ -71,30 +66,23 @@ const Navbar: React.FC = () => {
           {/* User Actions */}
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
-              <div className="relative group">
-                <button className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+              <>
+                <Link 
+                  to="/profile"
+                  className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                >
                   <User className="h-4 w-4" />
                   <span>{user ? `${user.firstName} ${user.lastName}` : 'User'}</span>
-                </button>
+                </Link>
                 
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  <div className="py-1">
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      Profile Settings
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center space-x-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sign out</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
+              </>
             ) : (
               <>
                 <Link
@@ -157,13 +145,6 @@ const Navbar: React.FC = () => {
 
             {isAuthenticated ? (
               <>
-                <Link
-                  to="/profile"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Profile Settings
-                </Link>
                 <button
                   onClick={() => {
                     handleLogout();

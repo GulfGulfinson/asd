@@ -23,9 +23,9 @@ export const loginUser = createAsyncThunk(
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('refreshToken', response.data.refreshToken);
       
-      return response.data;
+      return response.data; // Return the data part which contains user and tokens
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
+      return rejectWithValue(error.response?.data?.error || error.response?.data?.message || 'Login failed');
     }
   }
 );
@@ -40,9 +40,9 @@ export const registerUser = createAsyncThunk(
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('refreshToken', response.data.refreshToken);
       
-      return response.data;
+      return response.data; // Return the data part which contains user and tokens
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Registration failed');
+      return rejectWithValue(error.response?.data?.error || error.response?.data?.message || 'Registration failed');
     }
   }
 );
@@ -52,9 +52,9 @@ export const loadUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await authAPI.getProfile();
-      return response.data;
+      return response.data; // Return the data part which contains the user
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to load user');
+      return rejectWithValue(error.response?.data?.error || error.response?.data?.message || 'Failed to load user');
     }
   }
 );
@@ -155,7 +155,7 @@ const authSlice = createSlice({
       .addCase(loadUser.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = action.payload.user;
+        state.user = action.payload; // User data is directly in the payload now
         state.error = null;
       })
       .addCase(loadUser.rejected, (state, action) => {
