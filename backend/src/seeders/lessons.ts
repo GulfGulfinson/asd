@@ -306,6 +306,464 @@ Funktionen machen Ihren Code modularer, testbarer und wartbarer!
         `,
         difficulty: 'intermediate',
         tags: ['funktionen', 'code-organisation', 'parameter', 'scope']
+      },
+      {
+        title: 'Objektorientierte Programmierung: Klassen und Objekte',
+        summary: 'Verstehe die Konzepte der objektorientierten Programmierung und wie du Klassen erstellst.',
+        content: `
+# Objektorientierte Programmierung (OOP)
+
+Die objektorientierte Programmierung ist ein Paradigma, das Code in wiederverwendbare "Objekte" organisiert, die Daten und Funktionen kapseln.
+
+## Grundkonzepte
+
+### Klassen und Objekte
+Eine **Klasse** ist ein Bauplan für Objekte, während ein **Objekt** eine Instanz einer Klasse ist.
+
+**JavaScript:**
+\`\`\`javascript
+class Auto {
+    constructor(marke, modell, jahr) {
+        this.marke = marke;
+        this.modell = modell;
+        this.jahr = jahr;
+        this.geschwindigkeit = 0;
+    }
+    
+    beschleunigen(kmh) {
+        this.geschwindigkeit += kmh;
+        console.log(\`Neue Geschwindigkeit: \${this.geschwindigkeit} km/h\`);
+    }
+    
+    bremsen() {
+        this.geschwindigkeit = 0;
+        console.log("Auto gestoppt");
+    }
+}
+
+// Objekt erstellen
+const meinAuto = new Auto("BMW", "X5", 2023);
+meinAuto.beschleunigen(50); // Neue Geschwindigkeit: 50 km/h
+\`\`\`
+
+## Die vier Säulen der OOP
+
+### 1. Kapselung (Encapsulation)
+Daten und Methoden werden in einer Einheit zusammengefasst und von außen geschützt.
+
+\`\`\`javascript
+class Bankkonto {
+    #kontostand; // Private Eigenschaft
+    
+    constructor(anfangssaldo) {
+        this.#kontostand = anfangssaldo;
+    }
+    
+    einzahlen(betrag) {
+        if (betrag > 0) {
+            this.#kontostand += betrag;
+        }
+    }
+    
+    getSaldo() {
+        return this.#kontostand;
+    }
+}
+\`\`\`
+
+### 2. Vererbung (Inheritance)
+Neue Klassen können Eigenschaften und Methoden von bestehenden Klassen übernehmen.
+
+\`\`\`javascript
+class Fahrzeug {
+    constructor(marke, jahr) {
+        this.marke = marke;
+        this.jahr = jahr;
+    }
+    
+    starten() {
+        console.log("Fahrzeug gestartet");
+    }
+}
+
+class Motorrad extends Fahrzeug {
+    constructor(marke, jahr, hubraum) {
+        super(marke, jahr); // Elternkonstruktor aufrufen
+        this.hubraum = hubraum;
+    }
+    
+    wheelie() {
+        console.log("Wheelie!");
+    }
+}
+\`\`\`
+
+### 3. Polymorphismus
+Objekte verschiedener Klassen können über dieselbe Schnittstelle verwendet werden.
+
+\`\`\`javascript
+class Tier {
+    lautGeben() {
+        console.log("Tier macht Geräusch");
+    }
+}
+
+class Hund extends Tier {
+    lautGeben() {
+        console.log("Wau wau!");
+    }
+}
+
+class Katze extends Tier {
+    lautGeben() {
+        console.log("Miau!");
+    }
+}
+
+const tiere = [new Hund(), new Katze()];
+tiere.forEach(tier => tier.lautGeben()); // Polymorphe Verwendung
+\`\`\`
+
+### 4. Abstraktion
+Komplexe Implementierungsdetails werden vor dem Benutzer verborgen.
+
+\`\`\`javascript
+class Waschmaschine {
+    #motor;
+    #pumpe;
+    #heizelement;
+    
+    waschen(programm) {
+        this.#vorbereiten();
+        this.#waschzyklus(programm);
+        this.#schleudern();
+        this.#fertig();
+    }
+    
+    #vorbereiten() { /* Interne Logik */ }
+    #waschzyklus(programm) { /* Interne Logik */ }
+    #schleudern() { /* Interne Logik */ }
+    #fertig() { console.log("Waschgang beendet"); }
+}
+\`\`\`
+
+OOP macht Code wartbarer, wiederverwendbarer und einfacher zu verstehen!
+        `,
+        difficulty: 'intermediate',
+        tags: ['oop', 'klassen', 'objekte', 'vererbung']
+      },
+      {
+        title: 'Datenstrukturen: Arrays, Listen und Maps',
+        summary: 'Lerne die wichtigsten Datenstrukturen und wann du sie einsetzt.',
+        content: `
+# Datenstrukturen in der Programmierung
+
+Datenstrukturen sind verschiedene Wege, Daten zu organisieren und zu speichern, um effizient darauf zugreifen zu können.
+
+## Arrays (Listen)
+
+Arrays sind geordnete Sammlungen von Elementen des gleichen oder verschiedener Typen.
+
+\`\`\`javascript
+// Array erstellen
+const früchte = ['Apfel', 'Banane', 'Orange'];
+const zahlen = [1, 2, 3, 4, 5];
+
+// Zugriff auf Elemente
+console.log(früchte[0]); // "Apfel"
+console.log(früchte.length); // 3
+
+// Elemente hinzufügen
+früchte.push('Traube'); // Am Ende hinzufügen
+früchte.unshift('Mango'); // Am Anfang hinzufügen
+
+// Elemente entfernen
+const letztesFrucht = früchte.pop(); // Letztes Element entfernen
+const erstesFrucht = früchte.shift(); // Erstes Element entfernen
+\`\`\`
+
+## Array-Methoden
+
+\`\`\`javascript
+const zahlen = [1, 2, 3, 4, 5];
+
+// map: Transformiert jedes Element
+const verdoppelt = zahlen.map(x => x * 2); // [2, 4, 6, 8, 10]
+
+// filter: Filtert Elemente nach Bedingung
+const gerade = zahlen.filter(x => x % 2 === 0); // [2, 4]
+
+// reduce: Reduziert Array auf einen Wert
+const summe = zahlen.reduce((acc, x) => acc + x, 0); // 15
+
+// find: Findet erstes Element, das Bedingung erfüllt
+const gefunden = zahlen.find(x => x > 3); // 4
+
+// forEach: Führt Funktion für jedes Element aus
+zahlen.forEach(x => console.log(x));
+\`\`\`
+
+## Maps (Schlüssel-Wert-Paare)
+
+Maps speichern Daten als Schlüssel-Wert-Paare.
+
+\`\`\`javascript
+// Map erstellen
+const benutzer = new Map();
+
+// Werte setzen
+benutzer.set('name', 'Max');
+benutzer.set('alter', 25);
+benutzer.set('stadt', 'Berlin');
+
+// Werte abrufen
+console.log(benutzer.get('name')); // "Max"
+
+// Prüfen ob Schlüssel existiert
+console.log(benutzer.has('email')); // false
+
+// Über Map iterieren
+for (const [schlüssel, wert] of benutzer) {
+    console.log(\`\${schlüssel}: \${wert}\`);
+}
+\`\`\`
+
+## Sets (Eindeutige Werte)
+
+Sets speichern nur eindeutige Werte.
+
+\`\`\`javascript
+const eindeutigeZahlen = new Set([1, 2, 2, 3, 3, 4]);
+console.log(eindeutigeZahlen); // Set { 1, 2, 3, 4 }
+
+// Werte hinzufügen
+eindeutigeZahlen.add(5);
+
+// Prüfen ob Wert existiert
+console.log(eindeutigeZahlen.has(3)); // true
+
+// Größe ermitteln
+console.log(eindeutigeZahlen.size); // 5
+\`\`\`
+
+## Wann welche Datenstruktur?
+
+**Arrays verwenden für:**
+- Geordnete Listen
+- Wenn Reihenfolge wichtig ist
+- Indexbasierter Zugriff
+
+**Maps verwenden für:**
+- Schlüssel-Wert-Zuordnungen
+- Wenn Schlüssel keine Strings sind
+- Häufiges Hinzufügen/Entfernen
+
+**Sets verwenden für:**
+- Eindeutige Werte
+- Duplikate vermeiden
+- Mengenoperationen
+
+Die richtige Datenstruktur macht Ihren Code effizienter und lesbarer!
+        `,
+        difficulty: 'beginner',
+        tags: ['datenstrukturen', 'arrays', 'maps', 'sets']
+      },
+      {
+        title: 'Error Handling: Fehler elegant behandeln',
+        summary: 'Lerne, wie du Fehler in deinen Programmen abfängst und behandelst.',
+        content: `
+# Error Handling in der Programmierung
+
+Fehlerbehandlung ist essentiell für robuste Software. Lerne, wie du Fehler vorhersagen, abfangen und elegant behandeln kannst.
+
+## Try-Catch-Finally
+
+\`\`\`javascript
+try {
+    // Code, der einen Fehler verursachen könnte
+    const result = riskyOperation();
+    console.log("Erfolg:", result);
+} catch (error) {
+    // Fehlerbehandlung
+    console.error("Ein Fehler ist aufgetreten:", error.message);
+} finally {
+    // Code, der immer ausgeführt wird
+    console.log("Aufräumen...");
+}
+\`\`\`
+
+## Verschiedene Fehlertypen
+
+\`\`\`javascript
+// ReferenceError
+try {
+    console.log(nichtDefiniereVariable);
+} catch (error) {
+    if (error instanceof ReferenceError) {
+        console.log("Variable nicht definiert");
+    }
+}
+
+// TypeError
+try {
+    null.someMethod();
+} catch (error) {
+    if (error instanceof TypeError) {
+        console.log("Methode auf null/undefined aufgerufen");
+    }
+}
+
+// SyntaxError (zur Laufzeit nicht abfangbar)
+// RangeError
+try {
+    const arr = new Array(-1); // Negative Länge
+} catch (error) {
+    if (error instanceof RangeError) {
+        console.log("Ungültiger Wertebereich");
+    }
+}
+\`\`\`
+
+## Eigene Fehler werfen
+
+\`\`\`javascript
+function teileDurch(a, b) {
+    if (b === 0) {
+        throw new Error("Division durch Null ist nicht erlaubt");
+    }
+    return a / b;
+}
+
+function validateAge(age) {
+    if (age < 0) {
+        throw new RangeError("Alter kann nicht negativ sein");
+    }
+    if (age > 150) {
+        throw new RangeError("Alter zu hoch");
+    }
+    return true;
+}
+
+try {
+    validateAge(-5);
+} catch (error) {
+    console.error("Validierungsfehler:", error.message);
+}
+\`\`\`
+
+## Async/Await Error Handling
+
+\`\`\`javascript
+async function fetchUserData(userId) {
+    try {
+        const response = await fetch(\`/api/users/\${userId}\`);
+        
+        if (!response.ok) {
+            throw new Error(\`HTTP \${response.status}: \${response.statusText}\`);
+        }
+        
+        const userData = await response.json();
+        return userData;
+    } catch (error) {
+        console.error("Fehler beim Laden der Benutzerdaten:", error);
+        throw error; // Fehler weiterleiten
+    }
+}
+
+// Verwendung
+async function displayUser(userId) {
+    try {
+        const user = await fetchUserData(userId);
+        console.log("Benutzer geladen:", user);
+    } catch (error) {
+        console.log("Benutzer konnte nicht geladen werden");
+    }
+}
+\`\`\`
+
+## Promise Error Handling
+
+\`\`\`javascript
+fetch('/api/data')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Daten erhalten:', data);
+    })
+    .catch(error => {
+        console.error('Fehler:', error);
+    })
+    .finally(() => {
+        console.log('Anfrage abgeschlossen');
+    });
+\`\`\`
+
+## Defensive Programmierung
+
+\`\`\`javascript
+function processArray(arr) {
+    // Eingabe validieren
+    if (!Array.isArray(arr)) {
+        throw new TypeError("Parameter muss ein Array sein");
+    }
+    
+    if (arr.length === 0) {
+        return []; // Graceful handling
+    }
+    
+    return arr.map(item => {
+        // Jedes Element prüfen
+        if (typeof item !== 'number') {
+            console.warn(\`Warnung: \${item} ist keine Zahl\`);
+            return 0; // Fallback-Wert
+        }
+        return item * 2;
+    });
+}
+\`\`\`
+
+## Error Boundaries (React)
+
+\`\`\`javascript
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+    
+    static getDerivedStateFromError(error) {
+        return { hasError: true };
+    }
+    
+    componentDidCatch(error, errorInfo) {
+        console.error('Error Boundary caught an error:', error, errorInfo);
+    }
+    
+    render() {
+        if (this.state.hasError) {
+            return <h1>Etwas ist schiefgelaufen.</h1>;
+        }
+        return this.props.children;
+    }
+}
+\`\`\`
+
+## Best Practices
+
+1. **Spezifische Fehler fangen**: Verwende verschiedene catch-Blöcke für verschiedene Fehlertypen
+2. **Nicht alle Fehler schlucken**: Log Fehler für Debugging
+3. **Graceful Degradation**: Biete Fallback-Lösungen
+4. **User-friendly Messages**: Zeige Benutzern verständliche Fehlermeldungen
+5. **Fail Fast**: Fehler früh erkennen und behandeln
+
+Gute Fehlerbehandlung macht deine Software robust und benutzerfreundlich!
+        `,
+        difficulty: 'intermediate',
+        tags: ['error-handling', 'try-catch', 'debugging', 'robustheit']
       }
     ],
     
@@ -588,6 +1046,374 @@ Pandas macht Datenanalyse zugänglich und effizient. Mit diesen Grundlagen könn
         `,
         difficulty: 'intermediate',
         tags: ['python', 'pandas', 'datenmanipulation', 'dataframe']
+      },
+      {
+        title: 'Machine Learning Basics: Supervised vs Unsupervised Learning',
+        summary: 'Verstehe die Grundlagen des maschinellen Lernens und die verschiedenen Lernarten.',
+        content: `
+# Machine Learning Grundlagen
+
+Machine Learning ist ein Teilbereich der künstlichen Intelligenz, der Computern ermöglicht, aus Daten zu lernen, ohne explizit programmiert zu werden.
+
+## Was ist Machine Learning?
+
+Machine Learning verwendet Algorithmen, um Muster in Daten zu identifizieren und Vorhersagen oder Entscheidungen zu treffen.
+
+**Traditionelle Programmierung:**
+Input + Programm → Output
+
+**Machine Learning:**
+Input + Output → Programm (Modell)
+
+## Supervised Learning (Überwachtes Lernen)
+
+Bei überwachtem Lernen trainieren wir Modelle mit Eingabe-Ausgabe-Paaren.
+
+### Beispiele:
+- **E-Mail-Spam-Erkennung**: Text → Spam/Nicht-Spam
+- **Bildklassifikation**: Bild → Katze/Hund
+- **Preisvorhersage**: Hauseigenschaften → Preis
+
+### Algorithmen:
+\`\`\`python
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+# Lineare Regression für Preisvorhersage
+model = LinearRegression()
+model.fit(X_train, y_train)
+predictions = model.predict(X_test)
+
+# Entscheidungsbaum für Klassifikation
+classifier = DecisionTreeClassifier()
+classifier.fit(X_train, y_train)
+classes = classifier.predict(X_test)
+\`\`\`
+
+## Unsupervised Learning (Unüberwachtes Lernen)
+
+Hier suchen wir Muster in Daten ohne vorgegebene Antworten.
+
+### Clustering (Gruppierung)
+\`\`\`python
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+# K-Means Clustering
+kmeans = KMeans(n_clusters=3)
+clusters = kmeans.fit_predict(data)
+
+plt.scatter(data[:, 0], data[:, 1], c=clusters)
+plt.title('Customer Segments')
+plt.show()
+\`\`\`
+
+### Dimensionalitätsreduktion
+\`\`\`python
+from sklearn.decomposition import PCA
+
+# Principal Component Analysis
+pca = PCA(n_components=2)
+reduced_data = pca.fit_transform(high_dim_data)
+\`\`\`
+
+## Der ML Workflow
+
+### 1. Problemdefinition
+- Was wollen wir vorhersagen?
+- Welche Art von Problem ist es?
+- Welche Daten benötigen wir?
+
+### 2. Datensammlung
+\`\`\`python
+import pandas as pd
+
+# Daten laden
+df = pd.read_csv('data.csv')
+
+# Fehlende Werte behandeln
+df = df.fillna(df.mean())
+
+# Kategorische Variablen encodieren
+df_encoded = pd.get_dummies(df)
+\`\`\`
+
+### 3. Feature Engineering
+\`\`\`python
+# Neue Features erstellen
+df['price_per_sqft'] = df['price'] / df['square_feet']
+df['age'] = 2024 - df['year_built']
+
+# Features skalieren
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+\`\`\`
+
+### 4. Modellauswahl und Training
+\`\`\`python
+from sklearn.model_selection import train_test_split
+
+# Daten aufteilen
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Verschiedene Modelle testen
+models = {
+    'Linear Regression': LinearRegression(),
+    'Random Forest': RandomForestRegressor(),
+    'SVM': SVR()
+}
+
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    score = model.score(X_test, y_test)
+    print(f'{name}: {score:.3f}')
+\`\`\`
+
+### 5. Evaluation
+\`\`\`python
+from sklearn.metrics import mean_squared_error, accuracy_score
+
+# Regression Metriken
+mse = mean_squared_error(y_test, predictions)
+rmse = np.sqrt(mse)
+
+# Klassifikation Metriken
+accuracy = accuracy_score(y_test, predictions)
+\`\`\`
+
+## Reinforcement Learning
+
+Lernen durch Belohnung und Bestrafung.
+
+**Beispiele:**
+- Spiele (AlphaGo, Chess)
+- Robotik
+- Autonomous Vehicles
+- Trading Algorithmen
+
+## Common Pitfalls
+
+1. **Overfitting**: Modell lernt Training-Daten auswendig
+2. **Underfitting**: Modell ist zu simpel
+3. **Data Leakage**: Zukunftsinformationen im Training
+4. **Bias in Data**: Verzerrte Trainingsdaten
+
+Machine Learning ist mächtig, aber erfordert sorgfältige Anwendung!
+        `,
+        difficulty: 'intermediate',
+        tags: ['machine-learning', 'supervised', 'unsupervised', 'ai']
+      },
+      {
+        title: 'Data Visualization: Daten zum Leben erwecken',
+        summary: 'Lerne, wie du Daten effektiv visualisierst und Geschichten erzählst.',
+        content: `
+# Data Visualization
+
+Eine gute Datenvisualisierung kann komplexe Informationen auf einen Blick verständlich machen und wichtige Insights aufdecken.
+
+## Warum Visualisierung wichtig ist
+
+"Ein Bild sagt mehr als tausend Worte" – das gilt besonders für Daten.
+
+**Vorteile:**
+- Schnelle Mustererkennung
+- Outlier-Identifikation
+- Trend-Analyse
+- Effektive Kommunikation
+
+## Grundlegende Diagrammtypen
+
+### Liniendiagramme
+Ideal für Zeitreihen und Trends.
+
+\`\`\`python
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Zeitreihen-Daten
+dates = pd.date_range('2024-01-01', periods=12, freq='M')
+sales = [100, 120, 115, 140, 155, 170, 165, 180, 190, 185, 200, 220]
+
+plt.figure(figsize=(10, 6))
+plt.plot(dates, sales, marker='o', linewidth=2)
+plt.title('Monatliche Verkäufe 2024')
+plt.xlabel('Monat')
+plt.ylabel('Verkäufe (in Tsd. €)')
+plt.grid(True, alpha=0.3)
+plt.show()
+\`\`\`
+
+### Balkendiagramme
+Perfekt für Kategorienvergleiche.
+
+\`\`\`python
+categories = ['A', 'B', 'C', 'D', 'E']
+values = [23, 45, 56, 78, 32]
+
+plt.figure(figsize=(8, 6))
+bars = plt.bar(categories, values, color=['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'])
+plt.title('Verkäufe nach Kategorie')
+plt.ylabel('Anzahl')
+
+# Werte auf Balken anzeigen
+for bar, value in zip(bars, values):
+    plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1, 
+             str(value), ha='center', va='bottom')
+plt.show()
+\`\`\`
+
+### Scatterplots
+Zeigen Beziehungen zwischen zwei Variablen.
+
+\`\`\`python
+import numpy as np
+
+# Korrelierte Daten generieren
+x = np.random.normal(50, 15, 100)
+y = x * 1.2 + np.random.normal(0, 10, 100)
+
+plt.figure(figsize=(8, 6))
+plt.scatter(x, y, alpha=0.6, color='#E74C3C')
+plt.xlabel('Variable X')
+plt.ylabel('Variable Y')
+plt.title('Korrelation zwischen X und Y')
+
+# Trendlinie hinzufügen
+z = np.polyfit(x, y, 1)
+p = np.poly1d(z)
+plt.plot(x, p(x), "r--", alpha=0.8)
+plt.show()
+\`\`\`
+
+## Erweiterte Visualisierungen
+
+### Heatmaps
+\`\`\`python
+import seaborn as sns
+
+# Korrelationsmatrix
+corr_matrix = df.corr()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0)
+plt.title('Korrelationsmatrix')
+plt.show()
+\`\`\`
+
+### Box Plots
+\`\`\`python
+# Verteilung verschiedener Gruppen
+data = [np.random.normal(100, 15, 100),
+        np.random.normal(120, 20, 100),
+        np.random.normal(110, 10, 100)]
+
+plt.figure(figsize=(8, 6))
+plt.boxplot(data, labels=['Gruppe A', 'Gruppe B', 'Gruppe C'])
+plt.title('Verteilung nach Gruppen')
+plt.ylabel('Werte')
+plt.show()
+\`\`\`
+
+## Interaktive Visualisierungen
+
+### Plotly
+\`\`\`python
+import plotly.express as px
+
+# Interaktiver Scatterplot
+fig = px.scatter(df, x='x_column', y='y_column', 
+                 color='category', size='size_column',
+                 hover_data=['additional_info'])
+fig.show()
+
+# Interaktive Zeitreihe
+fig = px.line(df, x='date', y='value', 
+              title='Interaktive Zeitreihe')
+fig.show()
+\`\`\`
+
+## Dashboard mit Streamlit
+
+\`\`\`python
+import streamlit as st
+import plotly.express as px
+
+st.title('Sales Dashboard')
+
+# Sidebar für Filter
+st.sidebar.header('Filter')
+year = st.sidebar.selectbox('Jahr', [2022, 2023, 2024])
+category = st.sidebar.multiselect('Kategorie', ['A', 'B', 'C'])
+
+# Metriken anzeigen
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric('Total Sales', '€1.2M', '↑12%')
+with col2:
+    st.metric('Customers', '2,341', '↑5%')
+with col3:
+    st.metric('Conversion', '3.2%', '↓0.3%')
+
+# Charts
+fig = px.line(filtered_data, x='date', y='sales')
+st.plotly_chart(fig)
+\`\`\`
+
+## Design Principles
+
+### 1. Klarheit vor Schönheit
+- Entferne unnötige Elemente
+- Fokus auf die Hauptbotschaft
+- Konsistente Farben und Schriftarten
+
+### 2. Richtige Chart-Wahl
+- **Zeit**: Liniendiagramm
+- **Vergleich**: Balkendiagramm
+- **Anteil**: Kreisdiagramm (sparsam verwenden)
+- **Korrelation**: Scatterplot
+- **Verteilung**: Histogramm, Box Plot
+
+### 3. Farbpsychologie
+\`\`\`python
+# Gute Farbpaletten
+colors_sequential = ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6']
+colors_diverging = ['#d73027', '#f46d43', '#fdae61', '#fee08b', '#d9ef8b']
+colors_qualitative = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+\`\`\`
+
+## Common Mistakes
+
+1. **3D-Charts**: Oft schwer lesbar
+2. **Zu viele Farben**: Überforderung
+3. **Falsche Skalierung**: Misleading
+4. **Kreisdiagramme mit vielen Kategorien**: Unlesbar
+5. **Fehlende Kontext**: Keine Achsenbeschriftung
+
+## Tools Übersicht
+
+**Python:**
+- matplotlib (Grundlagen)
+- seaborn (Statistische Plots)
+- plotly (Interaktiv)
+- bokeh (Web-basiert)
+
+**R:**
+- ggplot2 (Grammar of Graphics)
+- shiny (Interaktive Apps)
+
+**Business Tools:**
+- Tableau
+- Power BI
+- Looker
+
+Gute Visualisierung macht Daten zu Geschichten!
+        `,
+        difficulty: 'intermediate',
+        tags: ['visualization', 'charts', 'matplotlib', 'storytelling']
       }
     ],
     
