@@ -9,7 +9,7 @@ import { Lesson, Theme } from '../types';
 const Lessons: React.FC = () => {
   const dispatch = useAppDispatch();
   const { lessons, loading: lessonsLoading, error, pagination } = useAppSelector(state => state.lessons);
-  const { themes, loading: themesLoading } = useAppSelector(state => state.themes);
+  const { themes = [], loading: themesLoading } = useAppSelector(state => state.themes || { themes: [], loading: false });
   
   // Filter states
   const [selectedTheme, setSelectedTheme] = useState<string>('');
@@ -98,6 +98,7 @@ const Lessons: React.FC = () => {
   };
 
   const getThemeName = (themeId: string) => {
+    if (!Array.isArray(themes) || themes.length === 0) return 'Unknown Theme';
     const theme = themes.find(t => t._id === themeId);
     return theme?.name || 'Unknown Theme';
   };
@@ -173,13 +174,13 @@ const Lessons: React.FC = () => {
               disabled={themesLoading}
             >
               <option value="">All Themes</option>
-              {themes.map((theme: Theme) => (
+              {Array.isArray(themes) && themes.length > 0 && themes.map((theme: Theme) => (
                 <option key={theme._id} value={theme._id}>
                   {theme.name}
                 </option>
               ))}
             </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </div>
           </div>
@@ -198,7 +199,7 @@ const Lessons: React.FC = () => {
                 </option>
               ))}
             </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </div>
           </div>
@@ -244,7 +245,7 @@ const Lessons: React.FC = () => {
           {lessons.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lessons.map((lesson: Lesson) => (
-                <LessonCard key={lesson._id} lesson={lesson} themes={themes} />
+                <LessonCard key={lesson._id} lesson={lesson} themes={Array.isArray(themes) ? themes : []} />
               ))}
             </div>
           ) : (
@@ -295,18 +296,18 @@ const Lessons: React.FC = () => {
 // Separate component for lesson cards with animations
 interface LessonCardProps {
   lesson: Lesson;
-  themes: Theme[];
+  themes?: Theme[];
 }
 
-const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes }) => {
+const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes = [] }) => {
   const [displayStats, setDisplayStats] = useState({ views: 0, likes: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
   // Animate stats on mount
   useEffect(() => {
     const animateStats = () => {
-      const duration = 1000; // 1 second
-      const steps = 30;
+      const duration = 1500; // 1.5 seconds
+      const steps = 60; // 60 FPS
       const viewIncrement = lesson.viewsCount / steps;
       const likeIncrement = lesson.likesCount / steps;
       
@@ -330,7 +331,8 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes }) => {
       return () => clearInterval(interval);
     };
 
-    const timer = setTimeout(animateStats, Math.random() * 300); // Stagger animations
+    // Add a small random delay to stagger animations
+    const timer = setTimeout(animateStats, Math.random() * 500);
     return () => clearTimeout(timer);
   }, [lesson.viewsCount, lesson.likesCount]);
 
@@ -338,6 +340,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes }) => {
     if (typeof lesson.themeId === 'object' && lesson.themeId.color) {
       return lesson.themeId.color;
     }
+    if (!Array.isArray(themes) || themes.length === 0) return '#6B7280';
     const theme = themes.find(t => t._id === lesson.themeId);
     return theme?.color || '#6B7280';
   };
@@ -346,6 +349,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes }) => {
     if (typeof lesson.themeId === 'object' && lesson.themeId.name) {
       return lesson.themeId.name;
     }
+    if (!Array.isArray(themes) || themes.length === 0) return 'Unknown Theme';
     const theme = themes.find(t => t._id === lesson.themeId);
     return theme?.name || 'Unknown Theme';
   };
@@ -366,6 +370,27 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes }) => {
     return num.toString();
   };
 
+  const getDefaultImage = () => {
+    // Create a themed fallback image based on the lesson's theme
+    const themeColor = getThemeColor();
+    const themeName = getThemeName();
+    const themeIcon = typeof lesson.themeId === 'object' ? lesson.themeId.icon : '📚';
+    
+    // Map theme names to Unsplash image categories/keywords
+    const themeImageMap: Record<string, string> = {
+      'Data Science': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop&crop=center',
+      'Programmierung': 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=200&fit=crop&crop=center',
+      'Design & UX': 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=400&h=200&fit=crop&crop=center',
+      'Business & Entrepreneurship': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop&crop=center',
+      'Machine Learning': 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=200&fit=crop&crop=center',
+      'Technology': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=200&fit=crop&crop=center',
+      'Science': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=200&fit=crop&crop=center',
+      'Psychology': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=200&fit=crop&crop=center'
+    };
+    
+    return themeImageMap[themeName] || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop&crop=center';
+  };
+
   return (
     <Link
       to={`/lessons/${lesson._id}`}
@@ -375,14 +400,17 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes }) => {
     >
       <div className="aspect-w-16 aspect-h-9 relative overflow-hidden">
         <img
-          src={lesson.imageUrl || 'https://via.placeholder.com/400x200?text=No+Image'}
-          alt={lesson.title}
+          src={lesson.imageUrl || getDefaultImage()}
+          alt=""
           className={`w-full h-48 object-cover transition-transform duration-300 ${
             isHovered ? 'scale-105' : 'scale-100'
           }`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = 'https://via.placeholder.com/400x200?text=No+Image';
+            if (target.src !== getDefaultImage()) {
+              target.src = getDefaultImage();
+              target.alt = '';
+            }
           }}
         />
         <div className="absolute top-4 left-4">
@@ -418,11 +446,11 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes }) => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1 transition-colors hover:text-primary-600">
               <Eye className="h-4 w-4" />
-              <span className="font-medium">{formatNumber(displayStats.views)}</span>
+              <span className="font-medium tabular-nums">{formatNumber(displayStats.views)}</span>
             </div>
             <div className="flex items-center space-x-1 transition-colors hover:text-red-500">
               <Heart className="h-4 w-4" />
-              <span className="font-medium">{formatNumber(displayStats.likes)}</span>
+              <span className="font-medium tabular-nums">{formatNumber(displayStats.likes)}</span>
             </div>
           </div>
           <span className="text-xs text-gray-400">

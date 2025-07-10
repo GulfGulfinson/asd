@@ -18,7 +18,7 @@ export const fetchThemes = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await themesAPI.getAll();
-      return response.data.data;
+      return response.data.data || response.data; // Handle both possible response structures
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch themes');
     }

@@ -5,48 +5,48 @@ import { AppDispatch } from '../store';
 import { completeQuiz, saveProgress } from '../store/slices/progressSlice';
 import { Clock, CheckCircle, XCircle, ArrowLeft, ArrowRight, RotateCcw, Trophy, Target, CheckCircle2 } from 'lucide-react';
 
-// Mock quiz data for development
+// Mock quiz data for development - using actual MongoDB ObjectIds from the database
 const mockQuizzes: Record<string, any> = {
-  '1': {
-    _id: 'quiz-1',
-    lessonId: '1',
-    title: 'Machine Learning Basics Quiz',
+  '686f77b4f4b5f73585d2b326': {
+    _id: 'quiz-686f77b4f4b5f73585d2b326',
+    lessonId: '686f77b4f4b5f73585d2b326',
+    title: 'Data Science Grundlagen Quiz',
     questions: [
       {
         _id: 'q1',
-        question: 'Was ist Machine Learning?',
+        question: 'Was ist Data Science?',
         type: 'multiple_choice',
         options: [
-          'Eine Art von Computer-Hardware',
-          'Ein Teilbereich der künstlichen Intelligenz',
-          'Eine Programmiersprache',
-          'Eine Datenbank-Technologie'
+          'Eine reine Programmiertechnik',
+          'Ein interdisziplinäres Feld zur Extraktion von Erkenntnissen aus Daten',
+          'Eine Datenbank-Software',
+          'Eine statistische Methode'
         ],
         correctAnswer: '1',
-        explanation: 'Machine Learning ist tatsächlich ein Teilbereich der künstlichen Intelligenz, der es Systemen ermöglicht, aus Daten zu lernen.',
+        explanation: 'Data Science ist ein interdisziplinäres Feld, das Statistik, Programmierung und Domänenwissen kombiniert.',
         points: 10
       },
       {
         _id: 'q2',
-        question: 'Welche Art von Machine Learning verwendet gelabelte Trainingsdaten?',
+        question: 'Welche Programmiersprache ist besonders beliebt in Data Science?',
         type: 'multiple_choice',
         options: [
-          'Unsupervised Learning',
-          'Reinforcement Learning',
-          'Supervised Learning',
-          'Deep Learning'
+          'JavaScript',
+          'Python',
+          'C++',
+          'HTML'
         ],
-        correctAnswer: '2',
-        explanation: 'Supervised Learning verwendet gelabelte Trainingsdaten, um eine Mapping-Funktion von Inputs zu Outputs zu lernen.',
+        correctAnswer: '1',
+        explanation: 'Python ist wegen seiner umfangreichen Bibliotheken wie pandas, numpy und scikit-learn sehr beliebt in Data Science.',
         points: 10
       },
       {
         _id: 'q3',
-        question: 'Machine Learning Algorithmen können Muster in Daten ohne explizite Programmierung erkennen.',
+        question: 'Data Science Projekte beginnen immer mit der Datensammlung.',
         type: 'true_false',
         options: ['Wahr', 'Falsch'],
         correctAnswer: '0',
-        explanation: 'Das ist korrekt! Machine Learning Algorithmen sind darauf ausgelegt, Muster in Daten automatisch zu erkennen.',
+        explanation: 'Richtig! Datensammlung ist normalerweise der erste Schritt im Data Science Prozess.',
         points: 5
       }
     ],
@@ -55,37 +55,37 @@ const mockQuizzes: Record<string, any> = {
     attemptsCount: 0,
     averageScore: 0
   },
-  '2': {
-    _id: 'quiz-2',
-    lessonId: '2',
-    title: 'Gewohnheiten Quiz',
+  '686f77b4f4b5f73585d2b324': {
+    _id: 'quiz-686f77b4f4b5f73585d2b324',
+    lessonId: '686f77b4f4b5f73585d2b324',
+    title: 'Programmierung Grundlagen Quiz',
     questions: [
       {
         _id: 'q1',
-        question: 'Aus welchen drei Komponenten besteht der Gewohnheits-Kreislauf?',
+        question: 'Was ist eine Variable in der Programmierung?',
         type: 'multiple_choice',
         options: [
-          'Denken, Handeln, Belohnung',
-          'Auslöser, Routine, Belohnung',
-          'Start, Fortsetzen, Beenden',
-          'Planen, Ausführen, Überprüfen'
+          'Ein mathematischer Operator',
+          'Ein benannter Speicherplatz für Daten',
+          'Eine Funktion',
+          'Ein Kommentar im Code'
         ],
         correctAnswer: '1',
-        explanation: 'Der Gewohnheits-Kreislauf besteht aus einem Auslöser (Trigger), einer Routine (Verhalten) und einer Belohnung (Nutzen).',
+        explanation: 'Eine Variable ist ein benannter Speicherplatz, in dem Daten gespeichert und während der Programmausführung manipuliert werden können.',
         points: 15
       },
       {
         _id: 'q2',
-        question: 'Wie lange dauert es im Durchschnitt, eine neue Gewohnheit zu etablieren?',
+        question: 'Welcher Datentyp speichert Ganzzahlen?',
         type: 'multiple_choice',
         options: [
-          '21 Tage',
-          '30 Tage',
-          '66 Tage',
-          '100 Tage'
+          'String',
+          'Boolean',
+          'Integer',
+          'Float'
         ],
         correctAnswer: '2',
-        explanation: 'Studien zeigen, dass es im Durchschnitt 66 Tage dauert, bis eine neue Gewohnheit automatisch wird.',
+        explanation: 'Integer ist der Datentyp für Ganzzahlen wie 42, -17, oder 0.',
         points: 10
       }
     ],
@@ -94,32 +94,32 @@ const mockQuizzes: Record<string, any> = {
     attemptsCount: 0,
     averageScore: 0
   },
-  '3': {
-    _id: 'quiz-3',
-    lessonId: '3',
-    title: 'Klimawandel Quiz',
+  '686f77b4f4b5f73585d2b328': {
+    _id: 'quiz-686f77b4f4b5f73585d2b328',
+    lessonId: '686f77b4f4b5f73585d2b328',
+    title: 'React Development Quiz',
     questions: [
       {
         _id: 'q1',
-        question: 'Welches ist das häufigste Treibhausgas in der Atmosphäre?',
+        question: 'Was ist React?',
         type: 'multiple_choice',
         options: [
-          'Methan (CH4)',
-          'Kohlendioxid (CO2)',
-          'Lachgas (N2O)',
-          'Fluorkohlenwasserstoffe'
+          'Eine Datenbank',
+          'Eine JavaScript-Bibliothek für Benutzeroberflächen',
+          'Ein CSS-Framework',
+          'Ein Backend-Framework'
         ],
         correctAnswer: '1',
-        explanation: 'Kohlendioxid ist das häufigste Treibhausgas und hauptsächlich für den anthropogenen Klimawandel verantwortlich.',
+        explanation: 'React ist eine JavaScript-Bibliothek für den Bau von Benutzeroberflächen, entwickelt von Facebook.',
         points: 10
       },
       {
         _id: 'q2',
-        question: 'Erneuerbare Energien können den Klimawandel verlangsamen.',
+        question: 'React verwendet einen Virtual DOM für bessere Performance.',
         type: 'true_false',
         options: ['Wahr', 'Falsch'],
         correctAnswer: '0',
-        explanation: 'Richtig! Erneuerbare Energien reduzieren die CO2-Emissionen und helfen dabei, den Klimawandel zu bekämpfen.',
+        explanation: 'Richtig! React verwendet einen Virtual DOM um UI-Updates zu optimieren und die Performance zu verbessern.',
         points: 10
       }
     ],

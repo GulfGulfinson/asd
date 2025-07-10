@@ -9,170 +9,17 @@ import SlideViewer, { SlideViewerRef } from '../components/SlideViewer';
 import { parseContentIntoAdvancedSlides } from '../utils/lessonSlidesParser';
 import { Theme, Lesson } from '../types/api';
 
-// Mock lesson data for development - this would come from API in production
-const mockLessons: Record<string, Lesson> = {
-  '1': {
-    _id: '1',
-    title: 'Introduction to Machine Learning',
-    summary: 'Learn the fundamentals of machine learning and its applications in modern technology.',
-    content: `
-      <h2>Was ist Machine Learning?</h2>
-      <p>Machine Learning ist ein Teilbereich der künstlichen Intelligenz, der es Computern ermöglicht, aus Daten zu lernen und Vorhersagen zu treffen, ohne explizit programmiert zu werden.</p>
-      
-      <h2>Grundlegende Konzepte</h2>
-      <p>Machine Learning basiert auf Algorithmen, die Muster in Daten erkennen und diese nutzen, um neue Daten zu klassifizieren oder Vorhersagen zu treffen.</p>
-      
-      <ul>
-        <li><strong>Supervised Learning:</strong> Lernen mit gelabelten Daten</li>
-        <li><strong>Unsupervised Learning:</strong> Finden von Mustern in ungelabelten Daten</li>
-        <li><strong>Reinforcement Learning:</strong> Lernen durch Belohnung und Bestrafung</li>
-      </ul>
-      
-      <h2>Anwendungen im Alltag</h2>
-      <p>Machine Learning begegnet uns täglich in verschiedenen Formen:</p>
-      <p>Von Empfehlungssystemen in Online-Shops bis hin zu Spracherkennung in Smartphones - ML revolutioniert unsere digitale Welt.</p>
-      
-      <h2>Die Zukunft von ML</h2>
-      <p>Mit der stetig wachsenden Rechenleistung und verfügbaren Datenmengen wird Machine Learning immer mächtiger und vielseitiger.</p>
-    `,
-    imageUrl: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800',
-    audioUrl: undefined,
-    videoUrl: undefined,
-    themeId: { 
-      _id: 'tech1',
-      name: 'Technology', 
-      color: '#3B82F6', 
-      slug: 'technology',
-      description: 'Technology and Innovation',
-      icon: '💻',
-      isActive: true,
-      lessonsCount: 10,
-      subscribersCount: 500,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    difficulty: 'beginner',
-    estimatedReadTime: 5,
-    tags: ['AI', 'Technology', 'Beginner'],
-    isPublished: true,
-    publishedAt: new Date('2024-01-15'),
-    viewsCount: 1234,
-    likesCount: 89,
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15')
-  },
-  '2': {
-    _id: '2',
-    title: 'The Science of Habit Formation',
-    summary: 'Discover how habits are formed and learn practical strategies to build positive habits.',
-    content: `
-      <h2>Die Psychologie der Gewohnheiten</h2>
-      <p>Gewohnheiten sind automatische Verhaltensweisen, die durch Wiederholung entstehen. Sie bilden sich durch einen neurologischen Kreislauf, den Wissenschaftler als "Habit Loop" bezeichnen.</p>
-      
-      <h2>Der Gewohnheits-Kreislauf</h2>
-      <p>Jede Gewohnheit besteht aus drei Komponenten:</p>
-      <ul>
-        <li><strong>Auslöser (Cue):</strong> Ein Signal, das das Gehirn in den automatischen Modus versetzt</li>
-        <li><strong>Routine:</strong> Das Verhalten selbst, das ausgeführt wird</li>
-        <li><strong>Belohnung:</strong> Der Nutzen, den wir aus dem Verhalten ziehen</li>
-      </ul>
-      
-      <h2>Neue Gewohnheiten entwickeln</h2>
-      <p>Um neue positive Gewohnheiten zu etablieren, ist es wichtig, den Habit Loop bewusst zu gestalten:</p>
-      <p>Wählen Sie einen klaren Auslöser, definieren Sie eine einfache Routine und sorgen Sie für eine sofortige Belohnung.</p>
-      
-      <h2>Schlechte Gewohnheiten durchbrechen</h2>
-      <p>Das Durchbrechen schlechter Gewohnheiten erfordert das Bewusstsein für den bestehenden Kreislauf und das bewusste Ersetzen der Routine durch eine positivere Alternative.</p>
-    `,
-    imageUrl: 'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?w=800',
-    audioUrl: undefined,
-    videoUrl: undefined,
-    themeId: {
-      _id: 'psych1',
-      name: 'Psychology',
-      color: '#8B5CF6',
-      slug: 'psychology',
-      description: 'Psychology and Mental Health',
-      icon: '🧠',
-      isActive: true,
-      lessonsCount: 8,
-      subscribersCount: 300,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    difficulty: 'intermediate',
-    estimatedReadTime: 8,
-    tags: ['Psychology', 'Personal Development'],
-    isPublished: true,
-    publishedAt: new Date('2024-01-14'),
-    viewsCount: 2156,
-    likesCount: 142,
-    createdAt: new Date('2024-01-14'),
-    updatedAt: new Date('2024-01-14')
-  },
-  '3': {
-    _id: '3',
-    title: 'Understanding Climate Change',
-    summary: 'An overview of climate change causes, effects, and potential solutions.',
-    content: `
-      <h2>Was ist Klimawandel?</h2>
-      <p>Der Klimawandel bezieht sich auf langfristige Veränderungen der globalen Durchschnittstemperaturen und Wettermuster. Während Klimavariationen natürlich auftreten, sind die seit den 1800er Jahren beobachteten Veränderungen hauptsächlich auf menschliche Aktivitäten zurückzuführen.</p>
-      
-      <h2>Hauptursachen</h2>
-      <p>Die Hauptursache des aktuellen Klimawandels ist die Emission von Treibhausgasen:</p>
-      <ul>
-        <li><strong>Kohlendioxid (CO2):</strong> Hauptsächlich aus der Verbrennung fossiler Brennstoffe</li>
-        <li><strong>Methan (CH4):</strong> Aus Landwirtschaft und Mülldeponien</li>
-        <li><strong>Lachgas (N2O):</strong> Aus Düngemitteln und industriellen Prozessen</li>
-      </ul>
-      
-      <h2>Auswirkungen auf unseren Planeten</h2>
-      <p>Die Folgen des Klimawandels sind bereits heute spürbar und werden sich in Zukunft verstärken:</p>
-      <p>Steigende Meeresspiegel, extreme Wetterereignisse und Veränderungen in Ökosystemen bedrohen sowohl die Natur als auch menschliche Gesellschaften.</p>
-      
-      <h2>Lösungsansätze</h2>
-      <p>Es gibt viele Wege, dem Klimawandel zu begegnen - von erneuerbaren Energien über nachhaltige Landwirtschaft bis hin zu individuellen Verhaltensänderungen.</p>
-    `,
-    imageUrl: 'https://images.unsplash.com/photo-1569163139394-de4e5f43e4e3?w=800',
-    audioUrl: undefined,
-    videoUrl: undefined,
-    themeId: {
-      _id: 'sci1',
-      name: 'Science',
-      color: '#10B981',
-      slug: 'science',
-      description: 'Science and Environment',
-      icon: '🔬',
-      isActive: true,
-      lessonsCount: 12,
-      subscribersCount: 450,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    difficulty: 'intermediate',
-    estimatedReadTime: 12,
-    tags: ['Climate', 'Environment', 'Science'],
-    isPublished: true,
-    publishedAt: new Date('2024-01-13'),
-    viewsCount: 987,
-    likesCount: 76,
-    createdAt: new Date('2024-01-13'),
-    updatedAt: new Date('2024-01-13')
-  }
-};
-
 const LessonDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { currentLesson, loading, error } = useSelector((state: RootState) => state.lessons);
+  const { selectedLesson, loading, error } = useSelector((state: RootState) => state.lessons);
   const { user } = useSelector((state: RootState) => state.auth);
   const startTimeRef = useRef<Date>(new Date());
   const [lessonCompleted, setLessonCompleted] = useState(false);
   
   const [useSlideView, setUseSlideView] = useState(true);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [mockLesson, setMockLesson] = useState<Lesson | null>(null);
   
   // New state for enhanced functionality
   const [isLiked, setIsLiked] = useState(false);
@@ -186,20 +33,20 @@ const LessonDetail: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      // Try to get lesson from mock data first (for development)
-      const lesson = mockLessons[id];
-      if (lesson) {
-        setMockLesson(lesson);
-        setLikesCount(lesson.likesCount);
-        setViewsCount(lesson.viewsCount);
-        // Increment view count dynamically
-        setViewsCount(prev => prev + 1);
-      } else {
-        // Fallback to API call
-        dispatch(fetchLessonById(id));
-      }
+      console.log('LessonDetail: Fetching lesson with ID:', id);
+      // Always use API call to fetch lesson data
+      dispatch(fetchLessonById(id));
     }
   }, [dispatch, id]);
+
+  // Update likes and views count when selectedLesson changes
+  useEffect(() => {
+    console.log('LessonDetail: selectedLesson changed:', selectedLesson);
+    if (selectedLesson) {
+      setLikesCount(selectedLesson.likesCount);
+      setViewsCount(selectedLesson.viewsCount);
+    }
+  }, [selectedLesson]);
 
   useEffect(() => {
     // For development, skip authentication check
@@ -215,7 +62,7 @@ const LessonDetail: React.FC = () => {
 
   const handleLessonComplete = useCallback(async () => {
     // Use the actual lesson data (either mock or from store)
-    const lesson = mockLesson || currentLesson;
+    const lesson = selectedLesson;
     if (!lesson || lessonCompleted) return;
     
     // Calculate time spent
@@ -237,7 +84,7 @@ const LessonDetail: React.FC = () => {
     setTimeout(() => {
       navigate(`/quiz/${lesson._id}`); // Use _id from lesson
     }, 1000);
-  }, [mockLesson, currentLesson, navigate, dispatch, lessonCompleted]);
+  }, [selectedLesson, navigate, dispatch, lessonCompleted]);
 
   const handleLikeLesson = useCallback(async () => {
     if (isLiking) return;
@@ -270,7 +117,7 @@ const LessonDetail: React.FC = () => {
   }, [isLiked, isLiking]);
 
   const handleShareLesson = useCallback(async () => {
-    const lesson = mockLesson || currentLesson;
+    const lesson = selectedLesson;
     if (!lesson) return;
 
     const shareData = {
@@ -314,7 +161,7 @@ const LessonDetail: React.FC = () => {
         setShowShareTooltip(false);
       }, 2000);
     }
-  }, [mockLesson, currentLesson]);
+  }, [selectedLesson]);
 
   const handleRestartLesson = useCallback(() => {
     // Reset slide viewer
@@ -372,10 +219,18 @@ const LessonDetail: React.FC = () => {
     return { name: themeId.name, color: themeId.color };
   };
 
-  // Use mock lesson if available, otherwise use lesson from store
-  const displayLesson = mockLesson || currentLesson;
+  console.log('LessonDetail: Render state:', { 
+    id, 
+    selectedLesson: !!selectedLesson, 
+    loading, 
+    error 
+  });
 
-  if (loading && !mockLesson) {
+  // Use selectedLesson as the display lesson
+  const displayLesson = selectedLesson;
+
+  if (loading && !selectedLesson) {
+    console.log('LessonDetail: Showing loading state');
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center items-center py-20">
@@ -386,7 +241,8 @@ const LessonDetail: React.FC = () => {
     );
   }
 
-  if ((error || !currentLesson) && !mockLesson) {
+  if (error || !selectedLesson) {
+    console.log('LessonDetail: Showing error state', { error, selectedLesson: !!selectedLesson });
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-20">

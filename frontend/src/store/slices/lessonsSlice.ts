@@ -28,8 +28,8 @@ export const fetchLessons = createAsyncThunk(
     try {
       const response = await lessonsAPI.getAll(params);
       return {
-        lessons: response.data.lessons || response.data.data?.lessons || [],
-        pagination: response.data.pagination || response.data.data?.pagination || {
+        lessons: response.data?.lessons || response.data?.data?.lessons || [],
+        pagination: response.data?.pagination || response.data?.data?.pagination || {
           page: params.page || 1,
           limit: params.limit || 12,
           total: 0,
@@ -48,8 +48,8 @@ export const loadMoreLessons = createAsyncThunk(
     try {
       const response = await lessonsAPI.getAll(params);
       return {
-        lessons: response.data.lessons || response.data.data?.lessons || [],
-        pagination: response.data.pagination || response.data.data?.pagination || {
+        lessons: response.data?.lessons || response.data?.data?.lessons || [],
+        pagination: response.data?.pagination || response.data?.data?.pagination || {
           page: params.page,
           limit: params.limit || 12,
           total: 0,
@@ -67,8 +67,11 @@ export const fetchLessonById = createAsyncThunk(
   async (lessonId: string, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.getById(lessonId);
-      return response.data.lesson || response.data.data;
+      console.log('fetchLessonById API response:', response);
+      // API returns { success: true, data: lessonData }
+      return response.data;
     } catch (error: any) {
+      console.error('fetchLessonById error:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch lesson');
     }
   }
