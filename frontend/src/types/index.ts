@@ -77,6 +77,37 @@ export interface Lesson {
   likesCount: number;
   createdAt: Date;
   updatedAt: Date;
+  
+  // User-specific progress data (only present if authenticated)
+  userProgress?: {
+    status: 'not_started' | 'in_progress' | 'completed';
+    readingProgress: number;
+    liked?: boolean;
+    completedAt?: Date;
+    timeSpent: number;
+  };
+  
+  // Quiz information (only present if authenticated and lesson has quiz)
+  quiz?: {
+    _id: string;
+    title: string;
+    passingScore: number;
+    questionsCount: number;
+  };
+  
+  // Last quiz attempt (only present if authenticated and user attempted quiz)
+  lastQuizAttempt?: {
+    _id: string;
+    score: number;
+    passed: boolean;
+    completedAt: Date;
+  };
+  
+  // Computed fields (only present if authenticated)
+  hasQuiz?: boolean;
+  lessonCompleted?: boolean;
+  quizPassed?: boolean;
+  quizAttempted?: boolean;
 }
 
 export interface LessonProgress {

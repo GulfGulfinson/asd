@@ -5,47 +5,265 @@ interface AuthRequest extends Request {
   user?: IUser;
 }
 
-// Get all lessons with optional filtering
+// Get all lessons with filtering, pagination, and quiz completion status
 export const getAllLessons = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { themeId, difficulty, search, page = 1, limit = 10 } = req.query;
+    const { 
+      page = 1, 
+      limit = 12, 
+      themeId, 
+      difficulty, 
+      search,
+      status, // new: filter by completion status
+      quizStatus // new: filter by quiz completion status (passed, failed, not_attempted)
+    } = req.query;
     
-    const filter: any = { isPublished: true };
+    const pageNum = Math.max(1, parseInt(page as string, 10));
+    const limitNum = Math.max(1, Math.min(50, parseInt(limit as string, 10)));
+    const skip = (pageNum - 1) * limitNum;
     
-    if (themeId) filter.themeId = themeId;
-    if (difficulty) filter.difficulty = difficulty;
+    // Build query
+    const query: any = { isPublished: true };
+    
+    if (themeId) {
+      query.themeId = themeId;
+    }
+    
+    if (difficulty) {
+      query.difficulty = difficulty;
+    }
+    
     if (search) {
-      filter.$or = [
+      query.$or = [
         { title: { $regex: search, $options: 'i' } },
         { summary: { $regex: search, $options: 'i' } },
         { tags: { $in: [new RegExp(search as string, 'i')] } }
       ];
     }
     
-    const skip = (Number(page) - 1) * Number(limit);
+    // Get user ID if authenticated
+    const userId = (req as any).user?._id;
     
-    const [lessons, total] = await Promise.all([
-      Lesson.find(filter)
-        .populate('themeId', 'name color icon')
-        .sort({ publishedAt: -1 })
-        .skip(skip)
-        .limit(Number(limit)),
-      Lesson.countDocuments(filter)
-    ]);
+    // Base aggregation pipeline
+    let pipeline: any[] = [
+      { $match: query },
+      {
+        $lookup: {
+          from: 'themes',
+          localField: 'themeId',
+          foreignField: '_id',
+          as: 'theme'
+        }
+      },
+      { $unwind: { path: '$theme', preserveNullAndEmptyArrays: true } }
+    ];
+    
+    // Add user progress data if authenticated
+    if (userId) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'lessonprogresses',
+            let: { lessonId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$lessonId', '$$lessonId'] },
+                      { $eq: ['$userId', userId] }
+                    ]
+                  }
+                }
+              }
+            ],
+            as: 'userProgress'
+          }
+        },
+        {
+          $lookup: {
+            from: 'quizzes',
+            localField: '_id',
+            foreignField: 'lessonId',
+            as: 'quiz'
+          }
+        },
+        {
+          $lookup: {
+            from: 'quizattempts',
+            let: { lessonId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$lessonId', '$$lessonId'] },
+                      { $eq: ['$userId', userId] }
+                    ]
+                  }
+                }
+              },
+              { $sort: { completedAt: -1 } },
+              { $limit: 1 }
+            ],
+            as: 'lastQuizAttempt'
+          }
+        }
+      );
+    }
+    
+    // Add computed fields
+    pipeline.push({
+      $addFields: {
+        userProgress: { $arrayElemAt: ['$userProgress', 0] },
+        quiz: { $arrayElemAt: ['$quiz', 0] },
+        lastQuizAttempt: { $arrayElemAt: ['$lastQuizAttempt', 0] },
+        hasQuiz: { $gt: [{ $size: { $ifNull: ['$quiz', []] } }, 0] },
+        lessonCompleted: {
+          $cond: {
+            if: { $eq: [{ $arrayElemAt: ['$userProgress.status', 0] }, 'completed'] },
+            then: true,
+            else: false
+          }
+        },
+        quizPassed: {
+          $cond: {
+            if: { $eq: [{ $arrayElemAt: ['$lastQuizAttempt.passed', 0] }, true] },
+            then: true,
+            else: false
+          }
+        },
+        quizAttempted: {
+          $cond: {
+            if: { $gt: [{ $size: { $ifNull: ['$lastQuizAttempt', []] } }, 0] },
+            then: true,
+            else: false
+          }
+        }
+      }
+    });
+    
+    // Apply status filters if provided and user is authenticated
+    if (userId && status) {
+      const statusFilter: any = {};
+      switch (status) {
+        case 'completed':
+          statusFilter.lessonCompleted = true;
+          break;
+        case 'in_progress':
+          statusFilter['userProgress.status'] = 'in_progress';
+          break;
+        case 'not_started':
+          statusFilter.$or = [
+            { userProgress: { $exists: false } },
+            { 'userProgress.status': 'not_started' }
+          ];
+          break;
+      }
+      pipeline.push({ $match: statusFilter });
+    }
+    
+    // Apply quiz status filters if provided and user is authenticated
+    if (userId && quizStatus) {
+      const quizFilter: any = {};
+      switch (quizStatus) {
+        case 'passed':
+          quizFilter.quizPassed = true;
+          break;
+        case 'failed':
+          quizFilter.$and = [
+            { quizAttempted: true },
+            { quizPassed: false }
+          ];
+          break;
+        case 'not_attempted':
+          quizFilter.$and = [
+            { hasQuiz: true },
+            { quizAttempted: false }
+          ];
+          break;
+        case 'no_quiz':
+          quizFilter.hasQuiz = false;
+          break;
+      }
+      pipeline.push({ $match: quizFilter });
+    }
+    
+    // Sort by publication date (newest first)
+    pipeline.push({ $sort: { publishedAt: -1, createdAt: -1 } });
+    
+    // Get total count for pagination
+    const countPipeline = [...pipeline, { $count: 'total' }];
+    const [countResult] = await Lesson.aggregate(countPipeline);
+    const total = countResult?.total || 0;
+    
+    // Add pagination
+    pipeline.push({ $skip: skip }, { $limit: limitNum });
+    
+    // Project final fields
+    pipeline.push({
+      $project: {
+        _id: 1,
+        title: 1,
+        summary: 1,
+        imageUrl: 1,
+        themeId: 1,
+        difficulty: 1,
+        estimatedReadTime: 1,
+        tags: 1,
+        viewsCount: 1,
+        likesCount: 1,
+        publishedAt: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        theme: 1,
+        // User-specific data (only if authenticated)
+        ...(userId && {
+          userProgress: {
+            status: '$userProgress.status',
+            readingProgress: '$userProgress.readingProgress',
+            liked: '$userProgress.liked',
+            completedAt: '$userProgress.completedAt',
+            timeSpent: '$userProgress.timeSpent'
+          },
+          quiz: {
+            _id: '$quiz._id',
+            title: '$quiz.title',
+            passingScore: '$quiz.passingScore',
+            questionsCount: { $size: { $ifNull: ['$quiz.questions', []] } }
+          },
+          lastQuizAttempt: {
+            _id: '$lastQuizAttempt._id',
+            score: '$lastQuizAttempt.score',
+            passed: '$lastQuizAttempt.passed',
+            completedAt: '$lastQuizAttempt.completedAt'
+          },
+          hasQuiz: 1,
+          lessonCompleted: 1,
+          quizPassed: 1,
+          quizAttempted: 1
+        })
+      }
+    });
+    
+    // Execute aggregation
+    const lessons = await Lesson.aggregate(pipeline);
+    
+    const pages = Math.ceil(total / limitNum);
     
     res.json({
       success: true,
       data: {
         lessons,
         pagination: {
-          page: Number(page),
-          limit: Number(limit),
+          page: pageNum,
+          limit: limitNum,
           total,
-          pages: Math.ceil(total / Number(limit))
+          pages
         }
       }
     });

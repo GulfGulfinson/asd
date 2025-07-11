@@ -29,9 +29,21 @@ function App() {
                 <Dashboard />
               </ProtectedRoute>
             } />
-            <Route path="/lessons" element={<Lessons />} />
-            <Route path="/lessons/:id" element={<LessonDetail />} />
-            <Route path="/quiz/:lessonId" element={<QuizPage />} />
+            <Route path="/lessons" element={
+              <ProtectedRoute>
+                <Lessons />
+              </ProtectedRoute>
+            } />
+            <Route path="/lessons/:id" element={
+              <ProtectedRoute>
+                <LessonDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/quiz/:lessonId" element={
+              <ProtectedRoute>
+                <QuizPage />
+              </ProtectedRoute>
+            } />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />

@@ -9,7 +9,7 @@ import {
   getLessonStats,
   shareLesson
 } from '../controllers/lessonController';
-import { authenticate } from '../middleware/auth';
+import { authenticate, optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -19,8 +19,8 @@ router.post('/:id/like', authenticate, likeLesson);
 router.post('/:id/progress', authenticate, updateProgress);
 router.get('/:id/progress', authenticate, getUserProgress);
 
-// Public routes
-router.get('/', getAllLessons);
+// Public routes with optional auth
+router.get('/', optionalAuth, getAllLessons);
 router.get('/:id', getLessonById);
 router.get('/:id/stats', getLessonStats);
 router.post('/:id/share', shareLesson);

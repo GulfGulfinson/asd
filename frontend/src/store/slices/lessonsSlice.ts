@@ -24,7 +24,15 @@ const initialState: LessonState = {
 // Async thunks
 export const fetchLessons = createAsyncThunk(
   'lessons/fetchAll',
-  async (params: { themeId?: string; difficulty?: string; search?: string; page?: number; limit?: number } = {}, { rejectWithValue }) => {
+  async (params: { 
+    themeId?: string; 
+    difficulty?: string; 
+    search?: string; 
+    page?: number; 
+    limit?: number;
+    status?: string; // new: filter by lesson completion status
+    quizStatus?: string; // new: filter by quiz completion status
+  } = {}, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.getAll(params);
       return {
@@ -44,13 +52,21 @@ export const fetchLessons = createAsyncThunk(
 
 export const loadMoreLessons = createAsyncThunk(
   'lessons/loadMore',
-  async (params: { themeId?: string; difficulty?: string; search?: string; page: number; limit?: number }, { rejectWithValue }) => {
+  async (params: { 
+    themeId?: string; 
+    difficulty?: string; 
+    search?: string; 
+    page?: number; 
+    limit?: number;
+    status?: string; // new: filter by lesson completion status
+    quizStatus?: string; // new: filter by quiz completion status
+  } = {}, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.getAll(params);
       return {
         lessons: response.data?.lessons || response.data?.data?.lessons || [],
         pagination: response.data?.pagination || response.data?.data?.pagination || {
-          page: params.page,
+          page: params.page || 1,
           limit: params.limit || 12,
           total: 0,
           pages: 0
@@ -67,11 +83,9 @@ export const fetchLessonById = createAsyncThunk(
   async (lessonId: string, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.getById(lessonId);
-      console.log('fetchLessonById API response:', response);
       // API returns { success: true, data: lessonData }
       return response.data;
     } catch (error: any) {
-      console.error('fetchLessonById error:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch lesson');
     }
   }

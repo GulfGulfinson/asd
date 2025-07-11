@@ -33,7 +33,6 @@ const LessonDetail: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      console.log('LessonDetail: Fetching lesson with ID:', id);
       // Always use API call to fetch lesson data
       dispatch(fetchLessonById(id));
     }
@@ -41,7 +40,6 @@ const LessonDetail: React.FC = () => {
 
   // Update likes and views count when selectedLesson changes
   useEffect(() => {
-    console.log('LessonDetail: selectedLesson changed:', selectedLesson);
     if (selectedLesson) {
       setLikesCount(selectedLesson.likesCount);
       setViewsCount(selectedLesson.viewsCount);
@@ -219,18 +217,10 @@ const LessonDetail: React.FC = () => {
     return { name: themeId.name, color: themeId.color };
   };
 
-  console.log('LessonDetail: Render state:', { 
-    id, 
-    selectedLesson: !!selectedLesson, 
-    loading, 
-    error 
-  });
-
   // Use selectedLesson as the display lesson
   const displayLesson = selectedLesson;
 
   if (loading && !selectedLesson) {
-    console.log('LessonDetail: Showing loading state');
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center items-center py-20">
@@ -242,7 +232,6 @@ const LessonDetail: React.FC = () => {
   }
 
   if (error || !selectedLesson) {
-    console.log('LessonDetail: Showing error state', { error, selectedLesson: !!selectedLesson });
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-20">
@@ -333,6 +322,14 @@ const LessonDetail: React.FC = () => {
               lessonTitle={displayLesson.title}
               onSlideChange={handleSlideChange}
               onComplete={handleLessonComplete}
+              lessonTheme={{
+                name: themeInfo.name,
+                color: themeInfo.color,
+                icon: typeof displayLesson.themeId === 'object' ? displayLesson.themeId.icon : '📚',
+                slug: typeof displayLesson.themeId === 'object' ? displayLesson.themeId.slug : 'general'
+              }}
+              lessonDifficulty={displayLesson.difficulty}
+              estimatedReadTime={displayLesson.estimatedReadTime}
             />
 
             {/* Enhanced Lesson Meta Information */}

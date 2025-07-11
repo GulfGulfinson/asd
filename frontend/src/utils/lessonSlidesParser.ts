@@ -1,7 +1,7 @@
 interface Slide {
   id: string;
   title: string;
-  content: string;
+  content: any; // Will be React components instead of HTML strings
   type: 'intro' | 'content' | 'conclusion' | 'video' | 'image';
   imageUrl?: string;
   videoUrl?: string;
@@ -9,231 +9,417 @@ interface Slide {
   notes?: string;
 }
 
-export const parseContentIntoSlides = (content: string, lessonTitle: string): Slide[] => {
-  const slides: Slide[] = [];
+// Function to detect different content types in markdown
+const detectContentType = (content: string): 'markdown' | 'html' => {
+  // Check for markdown patterns
+  const markdownPatterns = [
+    /^#{1,6}\s/m,           // Headers (# ## ### etc)
+    /\*\*.*?\*\*/,          // Bold (**text**)
+    /\*(?!\*)[^*]+\*/,      // Italic (*text*) but not bold
+    /^\s*[-*+]\s/m,         // Unordered list (- * +)
+    /^\s*\d+\.\s/m,         // Ordered list (1. 2. etc)
+    /^\s*>\s/m,             // Blockquotes (>)
+    /\[.*?\]\(.*?\)/,       // Links [text](url)
+  ];
   
-  // Split content by major headings (h2, h3)
-  const sections = content.split(/(?=<h[23])/gi);
-  
-  // Add an introduction slide based on the lesson title
-  slides.push({
-    id: 'intro',
-    title: 'Willkommen zum Thema',
-    content: `<div class="text-center">
-      <h3 class="text-2xl font-semibold mb-4">${lessonTitle}</h3>
-      <p class="text-lg text-gray-600">Lass uns gemeinsam in dieses spannende Thema eintauchen!</p>
-      <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-        <p class="text-sm text-blue-800">📚 Klicke dich durch die einzelnen Folien und lerne in deinem eigenen Tempo.</p>
-      </div>
-    </div>`,
-    type: 'intro'
-  });
-
-  sections.forEach((section, index) => {
-    if (!section.trim()) return;
-    
-    // Extract title from heading tags
-    const titleMatch = section.match(/<h[23][^>]*>([^<]+)<\/h[23]>/i);
-    const title = titleMatch ? titleMatch[1].trim() : `Abschnitt ${index + 1}`;
-    
-    // Remove the heading from content to avoid duplication
-    let cleanContent = section.replace(/<h[23][^>]*>[^<]+<\/h[23]>/i, '').trim();
-    
-    // Check if content contains images
-    const imageMatch = cleanContent.match(/<img[^>]+src="([^"]+)"[^>]*>/i);
-    const hasImage = !!imageMatch;
-    
-    // Check if content contains video
-    const videoMatch = cleanContent.match(/<iframe[^>]+src="([^"]+)"[^>]*>|<video[^>]+src="([^"]+)"[^>]*>/i);
-    const hasVideo = !!videoMatch;
-    
-    // Determine slide type and extract media URLs
-    let slideType: 'content' | 'image' | 'video' = 'content';
-    let imageUrl: string | undefined;
-    let videoUrl: string | undefined;
-    
-    if (hasVideo) {
-      slideType = 'video';
-      videoUrl = videoMatch[1] || videoMatch[2];
-    } else if (hasImage) {
-      slideType = 'image';
-      imageUrl = imageMatch[1];
-    }
-    
-    // Split long content into multiple slides if needed
-    const paragraphs = cleanContent.split('</p>').filter(p => p.trim());
-    
-    if (paragraphs.length > 4) {
-      // Split into multiple slides for better readability
-      const chunkedParagraphs = chunkArray(paragraphs, 3);
-      
-      chunkedParagraphs.forEach((chunk, chunkIndex) => {
-        const chunkContent = chunk.join('</p>') + '</p>';
-        const slideTitle = chunkIndex === 0 ? title : `${title} (Teil ${chunkIndex + 1})`;
-        
-        slides.push({
-          id: `slide-${index}-${chunkIndex}`,
-          title: slideTitle,
-          content: chunkContent,
-          type: chunkIndex === 0 ? slideType : 'content',
-          imageUrl: chunkIndex === 0 ? imageUrl : undefined,
-          videoUrl: chunkIndex === 0 ? videoUrl : undefined,
-        });
-      });
-    } else {
-      slides.push({
-        id: `slide-${index}`,
-        title,
-        content: cleanContent,
-        type: slideType,
-        imageUrl,
-        videoUrl,
-      });
-    }
-  });
-
-  // Add a summary/conclusion slide
-  slides.push({
-    id: 'conclusion',
-    title: 'Zusammenfassung',
-    content: `<div class="text-center">
-      <h3 class="text-2xl font-semibold mb-4">Großartig! Du hast die Lektion abgeschlossen!</h3>
-      <div class="bg-green-50 border border-green-200 rounded-lg p-6 mt-6">
-        <div class="flex items-center justify-center mb-4">
-          <div class="bg-green-500 rounded-full p-3">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-        </div>
-        <p class="text-green-800 font-medium">Du hast erfolgreich neues Wissen erworben!</p>
-        <p class="text-green-600 mt-2">Vergiss nicht, das Gelernte zu wiederholen und zu üben.</p>
-      </div>
-      <div class="mt-6 text-sm text-gray-600">
-        <p>💡 Tipp: Teste dein Wissen mit dem Quiz oder entdecke weitere spannende Lektionen!</p>
-      </div>
-    </div>`,
-    type: 'conclusion'
-  });
-
-  return slides;
-};
-
-// Helper function to chunk array into smaller arrays
-const chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += chunkSize) {
-    chunks.push(array.slice(i, i + chunkSize));
+  // If content has clear markdown patterns, it's markdown
+  if (markdownPatterns.some(pattern => pattern.test(content))) {
+    return 'markdown';
   }
-  return chunks;
+  
+  // Check for HTML tags
+  if (/<[^>]+>/.test(content)) {
+    return 'html';
+  }
+  
+  // Default to markdown for plain text
+  return 'markdown';
 };
 
-// Enhanced parser for more sophisticated content splitting
+// Parse markdown content into structured data
+const parseMarkdownContent = (content: string) => {
+  const lines = content.split('\n');
+  const elements: any[] = [];
+  let currentElement: any = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmedLine = line.trim();
+
+    // Skip empty lines
+    if (!trimmedLine) {
+      // Finish current element if exists
+      if (currentElement) {
+        elements.push(currentElement);
+        currentElement = null;
+      }
+      continue;
+    }
+
+    // Handle headers
+    if (trimmedLine.startsWith('#')) {
+      // Finish current element
+      if (currentElement) {
+        elements.push(currentElement);
+      }
+      
+      const headerMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
+      if (headerMatch) {
+        const level = headerMatch[1].length;
+        const text = headerMatch[2];
+        currentElement = {
+          type: 'header',
+          level,
+          content: text
+        };
+      }
+      continue;
+    }
+
+    // Handle unordered lists
+    if (trimmedLine.match(/^[-*+]\s+/)) {
+      const listItemText = trimmedLine.replace(/^[-*+]\s+/, '');
+      
+      if (currentElement?.type !== 'unordered_list') {
+        // Finish current element and start new list
+        if (currentElement) elements.push(currentElement);
+        currentElement = {
+          type: 'unordered_list',
+          items: [listItemText]
+        };
+      } else {
+        // Add to existing list
+        currentElement.items.push(listItemText);
+      }
+      continue;
+    }
+
+    // Handle ordered lists
+    if (trimmedLine.match(/^\d+\.\s+/)) {
+      const listItemText = trimmedLine.replace(/^\d+\.\s+/, '');
+      
+      if (currentElement?.type !== 'ordered_list') {
+        // Finish current element and start new list
+        if (currentElement) elements.push(currentElement);
+        currentElement = {
+          type: 'ordered_list',
+          items: [listItemText]
+        };
+      } else {
+        // Add to existing list
+        currentElement.items.push(listItemText);
+      }
+      continue;
+    }
+
+    // Handle blockquotes
+    if (trimmedLine.startsWith('>')) {
+      const quoteText = trimmedLine.replace(/^>\s*/, '');
+      
+      if (currentElement?.type !== 'blockquote') {
+        if (currentElement) elements.push(currentElement);
+        currentElement = {
+          type: 'blockquote',
+          content: quoteText
+        };
+      } else {
+        currentElement.content += ' ' + quoteText;
+      }
+      continue;
+    }
+
+    // Handle regular paragraphs
+    if (trimmedLine) {
+      if (currentElement?.type !== 'paragraph') {
+        if (currentElement) elements.push(currentElement);
+        currentElement = {
+          type: 'paragraph',
+          content: trimmedLine
+        };
+    } else {
+        currentElement.content += ' ' + trimmedLine;
+      }
+    }
+  }
+
+  // Add final element
+  if (currentElement) {
+    elements.push(currentElement);
+  }
+
+  return elements;
+};
+
+// Format inline markdown within text (bold, italic, links)
+const formatInlineMarkdown = (text: string): any => {
+  if (!text) return text;
+
+  const parts: any[] = [];
+  let currentIndex = 0;
+  
+  // Patterns for inline formatting (removed code pattern)
+  const patterns = [
+    { regex: /\*\*(.*?)\*\*/g, type: 'bold' },
+    { regex: /\*(.*?)\*/g, type: 'italic' },
+    { regex: /\[([^\]]+)\]\(([^)]+)\)/g, type: 'link' }
+  ];
+
+  let matches: any[] = [];
+  
+  patterns.forEach(pattern => {
+    let match;
+    while ((match = pattern.regex.exec(text)) !== null) {
+      matches.push({
+        type: pattern.type,
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[1],
+        url: match[2] || null, // For links
+        fullMatch: match[0]
+      });
+    }
+  });
+
+  // Sort matches by start position
+  matches.sort((a, b) => a.start - b.start);
+
+  // Remove overlapping matches (keep first one)
+  matches = matches.filter((match, index) => {
+    if (index === 0) return true;
+    const prevMatch = matches[index - 1];
+    return match.start >= prevMatch.end;
+  });
+
+  if (matches.length === 0) {
+    return text;
+  }
+
+  matches.forEach((match, index) => {
+    // Add text before this match
+    if (match.start > currentIndex) {
+      parts.push(text.slice(currentIndex, match.start));
+    }
+
+    // Add the formatted match
+    parts.push({
+      type: match.type,
+      content: match.content,
+      url: match.url
+    });
+
+    currentIndex = match.end;
+  });
+
+  // Add remaining text
+  if (currentIndex < text.length) {
+    parts.push(text.slice(currentIndex));
+  }
+
+  return parts;
+};
+
+// Create React components for each element type
+const createSlideContent = (elements: any[]) => {
+  return elements.map((element, index) => {
+    const key = `element-${index}`;
+    
+    switch (element.type) {
+      case 'header':
+        return {
+          type: 'header',
+          level: element.level,
+          content: element.content,
+          key
+        };
+
+      case 'paragraph':
+        return {
+          type: 'paragraph',
+          content: formatInlineMarkdown(element.content),
+          key
+        };
+
+      case 'unordered_list':
+        return {
+          type: 'unordered_list',
+          items: element.items.map(formatInlineMarkdown),
+          key
+        };
+
+      case 'ordered_list':
+        return {
+          type: 'ordered_list',
+          items: element.items.map(formatInlineMarkdown),
+          key
+        };
+
+      case 'blockquote':
+        return {
+          type: 'blockquote',
+          content: formatInlineMarkdown(element.content),
+          key
+        };
+
+      default:
+        return {
+          type: 'paragraph',
+          content: element.content || '',
+          key
+        };
+    }
+  });
+};
+
+// Split content into sections based on headers
+const splitIntoSections = (content: string) => {
+  const contentType = detectContentType(content);
+  
+  if (contentType === 'html') {
+    // Handle legacy HTML content
+    return content.split(/(?=<h[23])/gi).filter(s => s.trim());
+  }
+
+  // Handle markdown content - split on horizontal rules (---) which separate slides
+  const sections = content.split(/\n---\n/).filter(s => s.trim());
+  
+  // If no horizontal rules found, fall back to header-based splitting
+  if (sections.length <= 1) {
+    const lines = content.split('\n');
+    const headerSections: string[] = [];
+    let currentSection = '';
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      
+      // Check if this is a major header (h1 or h2)
+      if (trimmedLine.match(/^#{1,2}\s+/)) {
+        // Save current section if it has content
+        if (currentSection.trim()) {
+          headerSections.push(currentSection.trim());
+        }
+        // Start new section
+        currentSection = line + '\n';
+      } else {
+        // Add to current section
+        currentSection += line + '\n';
+      }
+    }
+
+    // Add the last section
+    if (currentSection.trim()) {
+      headerSections.push(currentSection.trim());
+    }
+
+    return headerSections.filter(s => s.trim());
+  }
+
+  return sections;
+};
+
 export const parseContentIntoAdvancedSlides = (content: string, lessonTitle: string): Slide[] => {
   const slides: Slide[] = [];
+  const timestamp = Date.now(); // Use for unique IDs
   
-  // Introduction slide
+  // Add dedicated animated intro slide
   slides.push({
-    id: 'intro',
-    title: 'Einführung',
-    content: `<div class="text-center space-y-6">
-      <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-lg">
-        <h2 class="text-3xl font-bold mb-2">${lessonTitle}</h2>
-        <p class="text-blue-100">Bereit für eine neue Lernerfahrung?</p>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <div class="bg-blue-50 p-4 rounded-lg">
-          <div class="text-blue-600 font-semibold">📖 Interaktiv</div>
-          <p class="text-sm text-gray-600">Klicke dich durch die Folien</p>
-        </div>
-        <div class="bg-green-50 p-4 rounded-lg">
-          <div class="text-green-600 font-semibold">⏱️ Flexibel</div>
-          <p class="text-sm text-gray-600">Lerne in deinem Tempo</p>
-        </div>
-        <div class="bg-purple-50 p-4 rounded-lg">
-          <div class="text-purple-600 font-semibold">🎯 Strukturiert</div>
-          <p class="text-sm text-gray-600">Klare Lernziele</p>
-        </div>
-      </div>
-    </div>`,
+    id: `intro-slide-${timestamp}`,
+    title: lessonTitle,
+    content: {
+      type: 'intro-slide',
+      title: lessonTitle
+    },
     type: 'intro'
   });
 
-  // Parse content sections
-  const sections = content.split(/(?=<h[23])/gi).filter(s => s.trim());
+  // Split content into sections
+  const sections = splitIntoSections(content);
   
   sections.forEach((section, index) => {
-    // Extract and clean title
+    const contentType = detectContentType(section);
+    
+    if (contentType === 'html') {
+      // Handle legacy HTML content
     const titleMatch = section.match(/<h[23][^>]*>([^<]+)<\/h[23]>/i);
     const title = titleMatch ? titleMatch[1].trim() : `Abschnitt ${index + 1}`;
-    
-    // Clean content
-    let cleanContent = section.replace(/<h[23][^>]*>[^<]+<\/h[23]>/i, '').trim();
-    
-    // Enhanced content processing
-    cleanContent = enhanceContentForSlides(cleanContent);
-    
-    // Detect media
-    const imageMatch = cleanContent.match(/<img[^>]+src="([^"]+)"[^>]*>/i);
-    const videoMatch = cleanContent.match(/<iframe[^>]+src="([^"]+)"|<video[^>]+src="([^"]+)"/i);
+      const cleanContent = section.replace(/<h[23][^>]*>[^<]+<\/h[23]>/i, '').trim();
+      
+      slides.push({
+        id: `slide-${index}-${timestamp}`,
+        title,
+        content: cleanContent, // Keep as HTML for legacy content
+        type: 'content'
+      });
+    } else {
+      // Handle markdown content for subsequent slides with new design
+      const elements = parseMarkdownContent(section);
+      
+      if (elements.length === 0) return;
+
+      // Extract title from first header or create default
+      const titleElement = elements.find(el => el.type === 'header');
+      const title = titleElement ? titleElement.content : `Abschnitt ${index + 1}`;
+      
+      // Remove title from content elements
+      const contentElements = elements.filter(el => el !== titleElement);
+      const slideContent = createSlideContent(contentElements);
     
     slides.push({
-      id: `slide-${index}`,
+      id: `slide-${index}-${timestamp}`,
       title,
-      content: cleanContent,
-      type: videoMatch ? 'video' : imageMatch ? 'image' : 'content',
-      imageUrl: imageMatch?.[1],
-      videoUrl: videoMatch?.[1] || videoMatch?.[2],
-    });
+        content: {
+          type: 'markdown',
+          elements: slideContent
+        },
+        type: 'content'
+      });
+    }
   });
 
-  // Conclusion slide
+  // Add conclusion slide with new design
   slides.push({
-    id: 'conclusion',
+    id: `conclusion-${timestamp}`,
+    title: 'Gratulation!',
+    content: {
+      type: 'conclusion',
     title: 'Lektion abgeschlossen!',
-    content: `<div class="text-center space-y-6">
-      <div class="bg-gradient-to-r from-green-400 to-blue-500 text-white p-8 rounded-lg">
-        <div class="text-6xl mb-4">🎉</div>
-        <h2 class="text-3xl font-bold mb-2">Herzlichen Glückwunsch!</h2>
-        <p class="text-green-100">Du hast die Lektion erfolgreich abgeschlossen</p>
-      </div>
-      
-      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-yellow-800 mb-2">📈 Dein Fortschritt</h3>
-        <p class="text-yellow-700">Diese Lektion wurde zu deinem Lernfortschritt hinzugefügt!</p>
-      </div>
-      
-      <div class="text-sm text-gray-600 space-y-2">
-        <p>🧠 <strong>Nächste Schritte:</strong></p>
-        <p>• Teste dein Wissen mit einem Quiz</p>
-        <p>• Entdecke verwandte Lektionen</p>
-        <p>• Teile dein neues Wissen mit anderen</p>
-      </div>
-    </div>`,
+      message: 'Du hast erfolgreich neue Kenntnisse erworben.'
+    },
     type: 'conclusion'
   });
 
   return slides;
 };
 
-// Function to enhance content formatting for better slide presentation
-const enhanceContentForSlides = (content: string): string => {
-  // Add better spacing and formatting
-  content = content.replace(/<p>/g, '<p class="mb-4 text-gray-700 leading-relaxed">');
-  content = content.replace(/<ul>/g, '<ul class="list-disc list-inside space-y-2 mb-4">');
-  content = content.replace(/<ol>/g, '<ol class="list-decimal list-inside space-y-2 mb-4">');
-  content = content.replace(/<li>/g, '<li class="text-gray-700">');
-  content = content.replace(/<strong>/g, '<strong class="font-semibold text-gray-900">');
-  content = content.replace(/<em>/g, '<em class="italic text-gray-800">');
-  
-  // Add highlight boxes for important content
-  content = content.replace(
-    /(<p[^>]*>.*?(?:wichtig|important|note|hinweis).*?<\/p>)/gi,
-    '<div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4 rounded-r-lg">$1</div>'
-  );
-  
-  return content;
+// Helper function to convert markdown elements to HTML
+const convertMarkdownElementsToHTML = (elements: any[]): string => {
+  return elements.map(element => {
+    switch (element.type) {
+      case 'header':
+        const level = Math.min(element.level + 1, 6);
+        return `<h${level}>${element.content}</h${level}>`;
+      
+      case 'paragraph':
+        return `<p>${element.content}</p>`;
+      
+      case 'unordered_list':
+        const listItems = element.items.map((item: string) => `<li>${item}</li>`).join('');
+        return `<ul>${listItems}</ul>`;
+      
+      case 'ordered_list':
+        const orderedItems = element.items.map((item: string) => `<li>${item}</li>`).join('');
+        return `<ol>${orderedItems}</ol>`;
+      
+      case 'blockquote':
+        return `<blockquote>${element.content}</blockquote>`;
+      
+      default:
+        return `<p>${element.content || ''}</p>`;
+    }
+  }).join('\n');
 };
+
+// Keep the old function for backward compatibility
+export const parseContentIntoSlides = parseContentIntoAdvancedSlides;
 
 const slideParsers = { parseContentIntoSlides, parseContentIntoAdvancedSlides };
 export default slideParsers; 

@@ -70,18 +70,20 @@ export const submitQuizAttempt = async (
       return;
     }
 
-    // Calculate score
+    // Calculate score and prepare answers
     let correctAnswers = 0;
     const processedAnswers = answers.map((answer: any, index: number) => {
       const question = quiz.questions[index];
-      const isCorrect = question.correctAnswer === answer.selectedAnswer;
+      const isCorrect = question.correctAnswer.toString() === answer.selectedAnswer;
       if (isCorrect) correctAnswers++;
 
+      const pointsEarned = isCorrect ? (question.points || 10) : 0;
+
       return {
-        questionIndex: index,
-        selectedAnswer: answer.selectedAnswer,
+        questionId: question._id,
+        userAnswer: answer.selectedAnswer,
         isCorrect,
-        timeSpent: answer.timeSpent || 0
+        pointsEarned
       };
     });
 
@@ -89,7 +91,7 @@ export const submitQuizAttempt = async (
     const passed = score >= quiz.passingScore;
 
     // Calculate total time spent
-    const totalTimeSpent = processedAnswers.reduce((total: number, answer: any) => total + answer.timeSpent, 0);
+    const totalTimeSpent = answers.reduce((total: number, answer: any) => total + (answer.timeSpent || 0), 0);
 
     // Create quiz attempt
     const attempt = new QuizAttempt({
@@ -104,26 +106,31 @@ export const submitQuizAttempt = async (
 
     await attempt.save();
 
-    // Update quiz statistics
+    // Update quiz statistics  
+    const currentAverage = quiz.averageScore;
+    const newAttemptCount = quiz.attemptsCount + 1;
+    const newAverage = ((currentAverage * quiz.attemptsCount) + score) / newAttemptCount;
+
     await Quiz.findByIdAndUpdate(quizId, {
-      $inc: { 
-        attemptsCount: 1,
-        averageScore: score
-      }
+      $inc: { attemptsCount: 1 },
+      $set: { averageScore: Math.round(newAverage) }
     });
 
-    // Return results
+    // Return results compatible with frontend expectations
     res.json({
       success: true,
       data: {
-        attemptId: attempt._id,
+        _id: attempt._id,
+        userId: attempt.userId,
+        quizId: attempt.quizId,
+        lessonId: attempt.lessonId,
+        answers: processedAnswers,
         score,
         passed,
-        correctAnswers,
-        totalQuestions: quiz.questions.length,
+        completedAt: attempt.completedAt,
         timeSpent: totalTimeSpent,
-        passingScore: quiz.passingScore,
-        answers: processedAnswers
+        createdAt: attempt.createdAt,
+        updatedAt: attempt.updatedAt
       }
     });
   } catch (error) {

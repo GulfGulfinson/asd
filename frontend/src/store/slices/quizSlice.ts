@@ -5,7 +5,7 @@ import { quizzesAPI } from '../../services/api';
 export interface QuizQuestion {
   _id?: string;
   question: string;
-  type: 'multiple_choice' | 'true_false' | 'fill_blank';
+  type: 'multiple-choice' | 'true-false' | 'fill-in-the-blank';
   options?: string[];
   correctAnswer: string;
   explanation?: string;
@@ -89,7 +89,7 @@ export const fetchQuizByLessonId = createAsyncThunk(
 
 export const submitQuizAttempt = createAsyncThunk(
   'quiz/submitAttempt',
-  async ({ quizId, answers }: { quizId: string; answers: { questionId: string; selectedOption: number }[] }, { rejectWithValue }) => {
+  async ({ quizId, answers }: { quizId: string; answers: { selectedAnswer: string; timeSpent?: number }[] }, { rejectWithValue }) => {
     try {
       const response = await quizzesAPI.submitAttempt(quizId, answers);
       return response;
@@ -146,6 +146,12 @@ const quizSlice = createSlice({
     
     updateTimeRemaining: (state, action: PayloadAction<number>) => {
       state.timeRemaining = Math.max(0, action.payload);
+    },
+    
+    decrementTime: (state) => {
+      if (state.timeRemaining > 0) {
+        state.timeRemaining -= 1;
+      }
     },
     
     timeUp: (state) => {
@@ -227,6 +233,7 @@ export const {
   previousQuestion,
   startQuiz,
   updateTimeRemaining,
+  decrementTime,
   timeUp,
   showQuizResults,
   resetQuiz,

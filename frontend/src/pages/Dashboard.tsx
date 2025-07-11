@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
   };
 
   const getRecentAchievements = () => {
-    return achievements
+    return [...achievements]
       .sort((a, b) => new Date(b.unlockedAt).getTime() - new Date(a.unlockedAt).getTime())
       .slice(0, 3);
   };

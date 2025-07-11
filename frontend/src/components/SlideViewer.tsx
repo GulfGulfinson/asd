@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Check, BookOpen, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import SlideContent from './SlideContent';
 
 export interface Slide {
   id: string;
   type: 'intro' | 'content' | 'conclusion' | 'video' | 'image';
   title: string;
-  content: string;
+  content: string | any; // Can be HTML string or structured content
   imageUrl?: string;
   videoUrl?: string;
   duration?: number; // estimated time in seconds
@@ -19,6 +21,14 @@ interface SlideViewerProps {
   onComplete?: () => void;
   autoPlay?: boolean;
   showProgress?: boolean;
+  lessonTheme?: {
+    name: string;
+    color: string;
+    icon: string;
+    slug: string;
+  };
+  lessonDifficulty?: string;
+  estimatedReadTime?: number;
 }
 
 export interface SlideViewerRef {
@@ -35,6 +45,9 @@ const SlideViewer = forwardRef<SlideViewerRef, SlideViewerProps>(({
   onComplete,
   autoPlay = false,
   showProgress = true,
+  lessonTheme,
+  lessonDifficulty = 'beginner',
+  estimatedReadTime = 5
 }, ref) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
@@ -214,121 +227,146 @@ const SlideViewer = forwardRef<SlideViewerRef, SlideViewerProps>(({
 
       {/* Slide Content */}
       <div className="relative">
-        {/* Slide Display */}
-        <div className="min-h-[500px] flex flex-col justify-center p-8">
-          {currentSlideData.type === 'intro' && (
-            <div className="text-center">
-              <div className="mb-6">
-                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
-                  Einführung
-                </span>
-              </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-6">
-                {currentSlideData.title}
-              </h1>
-              <div 
-                className="text-xl text-gray-600 max-w-3xl mx-auto"
-                dangerouslySetInnerHTML={{ __html: currentSlideData.content }}
-              />
-            </div>
-          )}
-
-          {currentSlideData.type === 'content' && (
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                {currentSlideData.title}
-              </h2>
-              
-              {currentSlideData.imageUrl && (
-                <div className="mb-6">
-                  <img
-                    src={currentSlideData.imageUrl}
-                    alt={currentSlideData.title}
-                    className="w-full max-w-2xl mx-auto rounded-lg shadow-sm"
+        {/* Slide Display - Fixed height with proper scrolling */}
+        <div className="h-[600px] max-h-[70vh] overflow-y-auto flex flex-col p-8 custom-scrollbar">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentSlideData.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1"
+            >
+              {currentSlideData.type === 'intro' && (
+                <div className="text-center flex-1 flex flex-col justify-center">
+                  <SlideContent 
+                    key={`slide-content-${currentSlide}-intro`}
+                    content={currentSlideData.content}
+                    isFirstSlide={true}
+                    lessonTheme={lessonTheme}
+                    lessonTitle={lessonTitle}
+                    lessonDifficulty={lessonDifficulty}
+                    estimatedReadTime={estimatedReadTime}
+                    onStartLearning={nextSlide}
                   />
                 </div>
               )}
-              
-              <div 
-                className="prose prose-lg max-w-none text-gray-700"
-                dangerouslySetInnerHTML={{ __html: currentSlideData.content }}
-              />
-              
-              {currentSlideData.notes && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">💡 Hinweis</h4>
-                  <p className="text-blue-800 text-sm">{currentSlideData.notes}</p>
+
+              {currentSlideData.type === 'content' && (
+                <div className="flex-1">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                    {currentSlideData.title}
+                  </h2>
+                  
+                  {currentSlideData.imageUrl && (
+                    <div className="mb-6">
+                      <img
+                        src={currentSlideData.imageUrl}
+                        alt={currentSlideData.title}
+                        className="w-full max-w-2xl mx-auto rounded-lg shadow-sm"
+                      />
+                    </div>
+                  )}
+                  
+                  <SlideContent 
+                    key={`slide-content-${currentSlide}-content`}
+                    content={currentSlideData.content}
+                    lessonTheme={lessonTheme}
+                    lessonTitle={lessonTitle}
+                    lessonDifficulty={lessonDifficulty}
+                    estimatedReadTime={estimatedReadTime}
+                  />
+                  
+                  {currentSlideData.notes && (
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">💡 Hinweis</h4>
+                      <p className="text-blue-800 text-sm">{currentSlideData.notes}</p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {currentSlideData.type === 'conclusion' && (
-            <div className="text-center">
-              <div className="mb-6">
-                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  Zusammenfassung
-                </span>
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                {currentSlideData.title}
-              </h2>
-              <div 
-                className="text-lg text-gray-600 max-w-3xl mx-auto"
-                dangerouslySetInnerHTML={{ __html: currentSlideData.content }}
-              />
-              
-              <div className="mt-8">
-                <button
-                  onClick={onComplete}
-                  className="btn-primary inline-flex items-center"
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  Lektion abschließen
-                </button>
-              </div>
-            </div>
-          )}
+              {currentSlideData.type === 'conclusion' && (
+                <div className="text-center flex-1 flex flex-col justify-center">
+                  <div className="mb-6">
+                    <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                      Zusammenfassung
+                    </span>
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                    {currentSlideData.title}
+                  </h2>
+                  <SlideContent 
+                    key={`slide-content-${currentSlide}-conclusion`}
+                    content={currentSlideData.content}
+                    lessonTheme={lessonTheme}
+                    lessonTitle={lessonTitle}
+                    lessonDifficulty={lessonDifficulty}
+                    estimatedReadTime={estimatedReadTime}
+                  />
+                  
+                  <div className="mt-8">
+                    <button
+                      onClick={onComplete}
+                      className="btn-primary inline-flex items-center"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Lektion abschließen
+                    </button>
+                  </div>
+                </div>
+              )}
 
-          {currentSlideData.type === 'video' && currentSlideData.videoUrl && (
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                {currentSlideData.title}
-              </h2>
-              <div className="mb-6">
-                <video
-                  src={currentSlideData.videoUrl}
-                  controls
-                  className="w-full max-w-4xl mx-auto rounded-lg shadow-sm"
-                >
-                  Ihr Browser unterstützt kein Video-Element.
-                </video>
-              </div>
-              <div 
-                className="prose prose-lg max-w-none text-gray-700"
-                dangerouslySetInnerHTML={{ __html: currentSlideData.content }}
-              />
-            </div>
-          )}
+              {currentSlideData.type === 'video' && currentSlideData.videoUrl && (
+                <div className="flex-1">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                    {currentSlideData.title}
+                  </h2>
+                  <div className="mb-6">
+                    <video
+                      src={currentSlideData.videoUrl}
+                      controls
+                      className="w-full max-w-4xl mx-auto rounded-lg shadow-sm"
+                    >
+                      Ihr Browser unterstützt kein Video-Element.
+                    </video>
+                  </div>
+                  <SlideContent 
+                    key={`slide-content-${currentSlide}-video`}
+                    content={currentSlideData.content}
+                    lessonTheme={lessonTheme}
+                    lessonTitle={lessonTitle}
+                    lessonDifficulty={lessonDifficulty}
+                    estimatedReadTime={estimatedReadTime}
+                  />
+                </div>
+              )}
 
-          {currentSlideData.type === 'image' && currentSlideData.imageUrl && (
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                {currentSlideData.title}
-              </h2>
-              <div className="mb-6">
-                <img
-                  src={currentSlideData.imageUrl}
-                  alt={currentSlideData.title}
-                  className="w-full max-w-4xl mx-auto rounded-lg shadow-sm"
-                />
-              </div>
-              <div 
-                className="prose prose-lg max-w-none text-gray-700"
-                dangerouslySetInnerHTML={{ __html: currentSlideData.content }}
-              />
-            </div>
-          )}
+              {currentSlideData.type === 'image' && currentSlideData.imageUrl && (
+                <div className="flex-1">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                    {currentSlideData.title}
+                  </h2>
+                  <div className="mb-6">
+                    <img
+                      src={currentSlideData.imageUrl}
+                      alt={currentSlideData.title}
+                      className="w-full max-w-4xl mx-auto rounded-lg shadow-sm"
+                    />
+                  </div>
+                  <SlideContent 
+                    key={`slide-content-${currentSlide}-image`}
+                    content={currentSlideData.content}
+                    lessonTheme={lessonTheme}
+                    lessonTitle={lessonTitle}
+                    lessonDifficulty={lessonDifficulty}
+                    estimatedReadTime={estimatedReadTime}
+                  />
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Auto-progress indicator */}

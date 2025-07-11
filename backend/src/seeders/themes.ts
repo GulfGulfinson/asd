@@ -2,27 +2,27 @@ import { Theme } from '../models';
 
 const themeData = [
   {
-    name: 'Programmierung',
-    description: 'Lerne die Grundlagen und fortgeschrittene Konzepte der Softwareentwicklung',
-    slug: 'programmierung',
-    color: '#3B82F6',
-    icon: '💻',
-    isActive: true
-  },
-  {
-    name: 'Data Science',
-    description: 'Entdecke die Welt der Datenanalyse, Machine Learning und KI',
-    slug: 'data-science',
-    color: '#8B5CF6',
-    icon: '📊',
-    isActive: true
-  },
-  {
-    name: 'Web Development',
-    description: 'Moderne Webentwicklung mit HTML, CSS, JavaScript und Frameworks',
-    slug: 'web-development',
+    name: 'Gesundheit & Fitness',
+    description: 'Lerne alles über körperliche und mentale Gesundheit, Ernährung und Fitness',
+    slug: 'gesundheit-fitness',
     color: '#10B981',
-    icon: '🌐',
+    icon: '💪',
+    isActive: true
+  },
+  {
+    name: 'Sprachen lernen',
+    description: 'Entdecke effektive Methoden zum Erlernen neuer Sprachen und Kulturen',
+    slug: 'sprachen-lernen',
+    color: '#8B5CF6',
+    icon: '🌍',
+    isActive: true
+  },
+  {
+    name: 'Psychologie',
+    description: 'Verstehe menschliches Verhalten, Emotionen und mentale Prozesse',
+    slug: 'psychologie',
+    color: '#3B82F6',
+    icon: '🧠',
     isActive: true
   },
   {

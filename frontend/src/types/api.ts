@@ -52,12 +52,43 @@ export interface Lesson {
   likesCount: number;
   createdAt: Date;
   updatedAt: Date;
+  
+  // User-specific progress data (only present if authenticated)
+  userProgress?: {
+    status: 'not_started' | 'in_progress' | 'completed';
+    readingProgress: number;
+    liked?: boolean;
+    completedAt?: Date;
+    timeSpent: number;
+  };
+  
+  // Quiz information (only present if authenticated and lesson has quiz)
+  quiz?: {
+    _id: string;
+    title: string;
+    passingScore: number;
+    questionsCount: number;
+  };
+  
+  // Last quiz attempt (only present if authenticated and user attempted quiz)
+  lastQuizAttempt?: {
+    _id: string;
+    score: number;
+    passed: boolean;
+    completedAt: Date;
+  };
+  
+  // Computed fields (only present if authenticated)
+  hasQuiz?: boolean;
+  lessonCompleted?: boolean;
+  quizPassed?: boolean;
+  quizAttempted?: boolean;
 }
 
 // Quiz types
 export interface QuizQuestion {
   question: string;
-  type: 'multiple_choice' | 'true_false' | 'fill_blank';
+  type: 'multiple-choice' | 'true-false' | 'fill-in-the-blank';
   options?: string[];
   correctAnswer: string;
   explanation?: string;

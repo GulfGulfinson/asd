@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Heart, Eye, Search, ChevronDown, Loader, Filter, X, BookOpen } from 'lucide-react';
+import { Clock, Heart, Eye, Search, ChevronDown, Loader, Filter, X, BookOpen, CheckCircle, Trophy, AlertCircle, PlayCircle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchLessons, loadMoreLessons, resetLessons } from '../store/slices/lessonsSlice';
 import { fetchThemes } from '../store/slices/themesSlice';
@@ -10,10 +10,13 @@ const Lessons: React.FC = () => {
   const dispatch = useAppDispatch();
   const { lessons, loading: lessonsLoading, error, pagination } = useAppSelector(state => state.lessons);
   const { themes = [], loading: themesLoading } = useAppSelector(state => state.themes || { themes: [], loading: false });
+  const { isAuthenticated } = useAppSelector(state => state.auth);
   
   // Filter states
   const [selectedTheme, setSelectedTheme] = useState<string>('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>(''); // new: lesson completion status filter
+  const [selectedQuizStatus, setSelectedQuizStatus] = useState<string>(''); // new: quiz status filter
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showFilters, setShowFilters] = useState<boolean>(false);
   
@@ -24,6 +27,21 @@ const Lessons: React.FC = () => {
     { value: 'beginner', label: 'Beginner' },
     { value: 'intermediate', label: 'Intermediate' },
     { value: 'advanced', label: 'Advanced' }
+  ];
+
+  // Status filter options (only show if authenticated)
+  const statusOptions = [
+    { value: 'completed', label: 'Abgeschlossen' },
+    { value: 'in_progress', label: 'In Bearbeitung' },
+    { value: 'not_started', label: 'Nicht begonnen' }
+  ];
+
+  // Quiz status filter options (only show if authenticated)
+  const quizStatusOptions = [
+    { value: 'passed', label: 'Quiz bestanden' },
+    { value: 'failed', label: 'Quiz nicht bestanden' },
+    { value: 'not_attempted', label: 'Quiz nicht versucht' },
+    { value: 'no_quiz', label: 'Kein Quiz' }
   ];
 
   // Fetch themes on component mount
@@ -43,9 +61,11 @@ const Lessons: React.FC = () => {
     if (selectedTheme) params.themeId = selectedTheme;
     if (selectedDifficulty) params.difficulty = selectedDifficulty;
     if (searchQuery.trim()) params.search = searchQuery.trim();
+    if (isAuthenticated && selectedStatus) params.status = selectedStatus;
+    if (isAuthenticated && selectedQuizStatus) params.quizStatus = selectedQuizStatus;
     
     dispatch(fetchLessons(params));
-  }, [dispatch, selectedTheme, selectedDifficulty, searchQuery]);
+  }, [dispatch, selectedTheme, selectedDifficulty, searchQuery, selectedStatus, selectedQuizStatus, isAuthenticated]);
 
   // Debounced search handler
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,9 +87,19 @@ const Lessons: React.FC = () => {
     setSelectedDifficulty(e.target.value);
   };
 
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(e.target.value);
+  };
+
+  const handleQuizStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedQuizStatus(e.target.value);
+  };
+
   const clearFilters = () => {
     setSelectedTheme('');
     setSelectedDifficulty('');
+    setSelectedStatus('');
+    setSelectedQuizStatus('');
     setSearchQuery('');
   };
 
@@ -83,11 +113,13 @@ const Lessons: React.FC = () => {
     if (selectedTheme) params.themeId = selectedTheme;
     if (selectedDifficulty) params.difficulty = selectedDifficulty;
     if (searchQuery.trim()) params.search = searchQuery.trim();
+    if (isAuthenticated && selectedStatus) params.status = selectedStatus;
+    if (isAuthenticated && selectedQuizStatus) params.quizStatus = selectedQuizStatus;
     
     dispatch(loadMoreLessons(params));
   };
 
-  const hasActiveFilters = selectedTheme || selectedDifficulty || searchQuery;
+  const hasActiveFilters = selectedTheme || selectedDifficulty || selectedStatus || selectedQuizStatus || searchQuery;
   const hasMoreLessons = pagination.page < pagination.pages;
 
   const formatNumber = (num: number) => {
@@ -148,88 +180,118 @@ const Lessons: React.FC = () => {
         </div>
 
         {/* Filter Toggle (Mobile) */}
-        <div className="md:hidden mb-4">
+        <div className="lg:hidden mb-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <Filter className="h-5 w-5 mr-2" />
             Filters
-            {hasActiveFilters && (
-              <span className="ml-2 bg-primary-600 text-white text-xs px-2 py-1 rounded-full">
-                {[selectedTheme, selectedDifficulty, searchQuery].filter(Boolean).length}
-              </span>
-            )}
+            <ChevronDown className={`h-5 w-5 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
         </div>
 
-        {/* Filters */}
-        <div className={`md:flex gap-4 items-center ${showFilters ? 'block' : 'hidden md:flex'}`}>
-          {/* Theme Filter */}
-          <div className="relative mb-4 md:mb-0">
-            <select
-              value={selectedTheme}
-              onChange={handleThemeChange}
-              className="appearance-none block w-full md:w-auto px-4 py-2 pr-8 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-              disabled={themesLoading}
-            >
-              <option value="">All Themes</option>
-              {Array.isArray(themes) && themes.length > 0 && themes.map((theme: Theme) => (
-                <option key={theme._id} value={theme._id}>
-                  {theme.name}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <ChevronDown className="h-4 w-4 text-gray-400" />
+        {/* Filter Options */}
+        <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            {/* Theme Filter */}
+            <div>
+              <label htmlFor="theme-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                Theme
+              </label>
+              <select
+                id="theme-filter"
+                value={selectedTheme}
+                onChange={handleThemeChange}
+                className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+              >
+                <option value="">All Themes</option>
+                {Array.isArray(themes) && themes.map((theme) => (
+                  <option key={theme._id} value={theme._id}>
+                    {theme.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
 
-          {/* Difficulty Filter */}
-          <div className="relative mb-4 md:mb-0">
-            <select
-              value={selectedDifficulty}
-              onChange={handleDifficultyChange}
-              className="appearance-none block w-full md:w-auto px-4 py-2 pr-8 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-            >
-              <option value="">All Difficulties</option>
-              {difficulties.map((difficulty) => (
-                <option key={difficulty.value} value={difficulty.value}>
-                  {difficulty.label}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <ChevronDown className="h-4 w-4 text-gray-400" />
+            {/* Difficulty Filter */}
+            <div>
+              <label htmlFor="difficulty-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                Difficulty
+              </label>
+              <select
+                id="difficulty-filter"
+                value={selectedDifficulty}
+                onChange={handleDifficultyChange}
+                className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+              >
+                <option value="">All Levels</option>
+                {difficulties.map((difficulty) => (
+                  <option key={difficulty.value} value={difficulty.value}>
+                    {difficulty.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
 
-          {/* Clear Filters */}
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="text-primary-600 hover:text-primary-700 font-medium text-sm transition-colors"
-            >
-              Clear filters
-            </button>
-          )}
+            {/* Status Filter (only show if authenticated) */}
+            {isAuthenticated && (
+              <div>
+                <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  id="status-filter"
+                  value={selectedStatus}
+                  onChange={handleStatusChange}
+                  className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                >
+                  <option value="">Alle Status</option>
+                  {statusOptions.map((status) => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Quiz Status Filter (only show if authenticated) */}
+            {isAuthenticated && (
+              <div>
+                <label htmlFor="quiz-status-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                  Quiz Status
+                </label>
+                <select
+                  id="quiz-status-filter"
+                  value={selectedQuizStatus}
+                  onChange={handleQuizStatusChange}
+                  className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                >
+                  <option value="">Alle Quiz Status</option>
+                  {quizStatusOptions.map((status) => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <div className="flex items-end">
+                <button
+                  onClick={clearFilters}
+                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors text-sm"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Results info */}
-        {!lessonsLoading && lessons.length > 0 && (
-          <div className="mt-4 text-sm text-gray-600">
-            Showing {lessons.length} of {pagination.total} lessons
-            {hasActiveFilters && ' (filtered)'}
-          </div>
-        )}
       </div>
-
-      {/* Error State */}
-      {error && (
-        <div className="mb-8 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">{error}</p>
-        </div>
-      )}
 
       {/* Loading State */}
       {lessonsLoading && lessons.length === 0 && (
@@ -245,7 +307,7 @@ const Lessons: React.FC = () => {
           {lessons.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lessons.map((lesson: Lesson) => (
-                <LessonCard key={lesson._id} lesson={lesson} themes={Array.isArray(themes) ? themes : []} />
+                <LessonCard key={lesson._id} lesson={lesson} themes={Array.isArray(themes) ? themes : []} isAuthenticated={isAuthenticated} />
               ))}
             </div>
           ) : (
@@ -269,12 +331,12 @@ const Lessons: React.FC = () => {
           )}
 
           {/* Load More Button */}
-          {lessons.length > 0 && hasMoreLessons && (
-            <div className="mt-12 text-center">
-              <button 
+          {hasMoreLessons && lessons.length > 0 && (
+            <div className="text-center mt-8">
+              <button
                 onClick={loadMore}
-                className="btn-outline"
                 disabled={lessonsLoading}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {lessonsLoading ? (
                   <>
@@ -293,13 +355,14 @@ const Lessons: React.FC = () => {
   );
 };
 
-// Separate component for lesson cards with animations
+// Separate component for lesson cards with animations and status indicators
 interface LessonCardProps {
   lesson: Lesson;
   themes?: Theme[];
+  isAuthenticated: boolean;
 }
 
-const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes = [] }) => {
+const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes = [], isAuthenticated }) => {
   const [displayStats, setDisplayStats] = useState({ views: 0, likes: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
@@ -391,6 +454,55 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes = [] }) => {
     return themeImageMap[themeName] || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop&crop=center';
   };
 
+  // Get status indicators for authenticated users
+  const getStatusIndicators = () => {
+    if (!isAuthenticated) return null;
+
+    const indicators = [];
+
+    // Lesson completion status
+    if (lesson.lessonCompleted) {
+      indicators.push(
+        <div key="lesson-completed" className="flex items-center space-x-1 text-green-600" title="Lektion abgeschlossen">
+          <CheckCircle className="h-4 w-4" />
+          <span className="text-xs font-medium">Abgeschlossen</span>
+        </div>
+      );
+    } else if (lesson.userProgress?.status === 'in_progress') {
+      indicators.push(
+        <div key="lesson-progress" className="flex items-center space-x-1 text-blue-600" title="In Bearbeitung">
+          <PlayCircle className="h-4 w-4" />
+          <span className="text-xs font-medium">In Bearbeitung</span>
+        </div>
+      );
+    }
+
+    // Quiz status
+    if (lesson.hasQuiz) {
+      if (lesson.quizPassed) {
+        indicators.push(
+          <div key="quiz-passed" className="flex items-center space-x-1 text-yellow-600" title={`Quiz bestanden (${lesson.lastQuizAttempt?.score}%)`}>
+            <Trophy className="h-4 w-4" />
+            <span className="text-xs font-medium">{lesson.lastQuizAttempt?.score}%</span>
+          </div>
+        );
+      } else if (lesson.quizAttempted) {
+        indicators.push(
+          <div key="quiz-failed" className="flex items-center space-x-1 text-red-600" title={`Quiz nicht bestanden (${lesson.lastQuizAttempt?.score}%)`}>
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-xs font-medium">{lesson.lastQuizAttempt?.score}%</span>
+          </div>
+        );
+      }
+    }
+
+    return indicators.length > 0 ? (
+      <div className="flex flex-wrap gap-2 mb-3">
+        {indicators}
+      </div>
+    ) : null;
+  };
+
   return (
     <Link
       to={`/lessons/${lesson._id}`}
@@ -421,9 +533,33 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes = [] }) => {
             {getThemeName()}
           </span>
         </div>
+        
+        {/* Status badges overlay */}
+        {isAuthenticated && (
+          <div className="absolute top-4 right-4 flex flex-col space-y-1">
+            {lesson.lessonCompleted && (
+              <div className="bg-green-500 text-white rounded-full p-1" title="Lektion abgeschlossen">
+                <CheckCircle className="h-4 w-4" />
+              </div>
+            )}
+            {lesson.hasQuiz && lesson.quizPassed && (
+              <div className="bg-yellow-500 text-white rounded-full p-1" title="Quiz bestanden">
+                <Trophy className="h-4 w-4" />
+              </div>
+            )}
+            {lesson.hasQuiz && lesson.quizAttempted && !lesson.quizPassed && (
+              <div className="bg-red-500 text-white rounded-full p-1" title="Quiz nicht bestanden">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
       
       <div className="card-body">
+        {/* Status indicators for authenticated users */}
+        {getStatusIndicators()}
+        
         <div className="flex items-center justify-between mb-3">
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getDifficultyColor(lesson.difficulty)}`}>
             {lesson.difficulty}

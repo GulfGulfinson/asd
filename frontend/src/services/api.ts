@@ -88,13 +88,23 @@ export const themesAPI = {
 
 // Lessons API
 export const lessonsAPI = {
-  getAll: async (params?: { themeId?: string; difficulty?: string; search?: string; page?: number; limit?: number }) => {
+  getAll: async (params?: { 
+    themeId?: string; 
+    difficulty?: string; 
+    search?: string; 
+    page?: number; 
+    limit?: number;
+    status?: string; // new: filter by lesson completion status
+    quizStatus?: string; // new: filter by quiz completion status  
+  }) => {
     const queryParams = new URLSearchParams();
     if (params?.themeId) queryParams.append('themeId', params.themeId);
     if (params?.difficulty) queryParams.append('difficulty', params.difficulty);
     if (params?.search) queryParams.append('search', params.search);
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.quizStatus) queryParams.append('quizStatus', params.quizStatus);
     
     const url = queryParams.toString() ? `/lessons?${queryParams.toString()}` : '/lessons';
     const response = await api.get(url);
@@ -157,7 +167,7 @@ export const quizzesAPI = {
     return response.data;
   },
   
-  submitAttempt: async (quizId: string, answers: { questionId: string; selectedOption: number }[]) => {
+  submitAttempt: async (quizId: string, answers: { selectedAnswer: string; timeSpent?: number }[]) => {
     const response = await api.post(`/quizzes/${quizId}/attempt`, { answers });
     return response.data;
   },
