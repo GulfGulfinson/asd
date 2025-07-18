@@ -272,6 +272,12 @@ const createSlideContent = (elements: any[]) => {
 
 // Split content into sections based on headers
 const splitIntoSections = (content: string) => {
+  // Add safety check for undefined content
+  if (!content || typeof content !== 'string') {
+    console.warn('Invalid content provided to splitIntoSections:', content);
+    return ['# Inhalt wird geladen...\n\nDieser Inhalt wird derzeit geladen. Bitte versuchen Sie es in einem Moment erneut.'];
+  }
+
   const contentType = detectContentType(content);
   
   if (contentType === 'html') {
@@ -320,6 +326,24 @@ export const parseContentIntoAdvancedSlides = (content: string, lessonTitle: str
   const slides: Slide[] = [];
   const timestamp = Date.now(); // Use for unique IDs
   
+  // Add safety check for undefined content
+  if (!content || typeof content !== 'string') {
+    console.warn('Invalid content provided to parseContentIntoAdvancedSlides:', content);
+    // Return a basic error slide structure
+    return [
+      {
+        id: `error-slide-${timestamp}`,
+        title: 'Fehler beim Laden',
+        content: {
+          type: 'error',
+          title: 'Inhalt nicht verfügbar',
+          message: 'Der Inhalt dieser Lektion konnte nicht geladen werden. Bitte versuchen Sie es später erneut.'
+        },
+        type: 'content'
+      }
+    ];
+  }
+  
   // Add dedicated animated intro slide
   slides.push({
     id: `intro-slide-${timestamp}`,
@@ -339,8 +363,8 @@ export const parseContentIntoAdvancedSlides = (content: string, lessonTitle: str
     
     if (contentType === 'html') {
       // Handle legacy HTML content
-    const titleMatch = section.match(/<h[23][^>]*>([^<]+)<\/h[23]>/i);
-    const title = titleMatch ? titleMatch[1].trim() : `Abschnitt ${index + 1}`;
+      const titleMatch = section.match(/<h[23][^>]*>([^<]+)<\/h[23]>/i);
+      const title = titleMatch ? titleMatch[1].trim() : `Abschnitt ${index + 1}`;
       const cleanContent = section.replace(/<h[23][^>]*>[^<]+<\/h[23]>/i, '').trim();
       
       slides.push({
@@ -363,9 +387,9 @@ export const parseContentIntoAdvancedSlides = (content: string, lessonTitle: str
       const contentElements = elements.filter(el => el !== titleElement);
       const slideContent = createSlideContent(contentElements);
     
-    slides.push({
-      id: `slide-${index}-${timestamp}`,
-      title,
+      slides.push({
+        id: `slide-${index}-${timestamp}`,
+        title,
         content: {
           type: 'markdown',
           elements: slideContent
@@ -381,7 +405,7 @@ export const parseContentIntoAdvancedSlides = (content: string, lessonTitle: str
     title: 'Gratulation!',
     content: {
       type: 'conclusion',
-    title: 'Lektion abgeschlossen!',
+      title: 'Lektion abgeschlossen!',
       message: 'Du hast erfolgreich neue Kenntnisse erworben.'
     },
     type: 'conclusion'

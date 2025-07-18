@@ -83,8 +83,8 @@ export const fetchLessonById = createAsyncThunk(
   async (lessonId: string, { rejectWithValue }) => {
     try {
       const response = await lessonsAPI.getById(lessonId);
-      // API returns { success: true, data: lessonData }
-      return response.data;
+      // API returns { success: true, data: { lesson: lessonData } }
+      return response.data.data?.lesson || response.data.lesson || response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch lesson');
     }
@@ -111,18 +111,6 @@ export const markLessonCompleted = createAsyncThunk(
       return { lessonId, progress: response?.data.progress };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to mark lesson as completed');
-    }
-  }
-);
-
-export const likeLesson = createAsyncThunk(
-  'lessons/like',
-  async (lessonId: string, { rejectWithValue }) => {
-    try {
-      const response = await lessonsAPI.likeLesson(lessonId);
-      return { lessonId, lesson: response.data.lesson || response.data.data };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to like lesson');
     }
   }
 );
@@ -272,35 +260,6 @@ const lessonsSlice = createSlice({
       })
       .addCase(markLessonCompleted.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
-
-    // Like lesson
-    builder
-      .addCase(likeLesson.pending, (state) => {
-        // Don't set loading for like action to avoid UI blocking
-        state.error = null;
-      })
-      .addCase(likeLesson.fulfilled, (state, action) => {
-        state.success = 'Lesson liked!';
-        // Update lesson in all relevant places
-        const { lessonId, lesson } = action.payload;
-        const lessonIndex = state.lessons.findIndex(l => l._id === lessonId);
-        if (lessonIndex !== -1) {
-          state.lessons[lessonIndex] = lesson;
-        }
-        if (state.currentLesson?._id === lessonId) {
-          state.currentLesson = lesson;
-        }
-        if (state.selectedLesson?._id === lessonId) {
-          state.selectedLesson = lesson;
-        }
-        if (state.dailyLesson?._id === lessonId) {
-          state.dailyLesson = lesson;
-        }
-        state.error = null;
-      })
-      .addCase(likeLesson.rejected, (state, action) => {
         state.error = action.payload as string;
       });
   },

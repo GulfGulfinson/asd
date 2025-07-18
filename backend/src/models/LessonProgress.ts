@@ -5,7 +5,6 @@ export interface ILessonProgress extends Document {
   lessonId: Types.ObjectId;
   status: 'not_started' | 'in_progress' | 'completed';
   readingProgress: number; // 0-100
-  liked?: boolean;
   completedAt?: Date;
   lastAccessedAt: Date;
   timeSpent: number; // in seconds
@@ -32,10 +31,6 @@ const LessonProgressSchema = new Schema<ILessonProgress>({
     default: 0,
     min: 0,
     max: 100,
-  },
-  liked: {
-    type: Boolean,
-    default: false,
   },
   completedAt: Date,
   lastAccessedAt: {

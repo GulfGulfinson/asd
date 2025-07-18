@@ -14,6 +14,7 @@ export interface User {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  hasCompletedCookieConsent: boolean;
 }
 
 export interface UserPreferences {
@@ -23,6 +24,11 @@ export interface UserPreferences {
   language: string;
   timezone: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
+  cookieConsent?: {
+    analytics: boolean;
+    preferences: boolean;
+    marketing: boolean;
+  };
 }
 
 export interface Subscription {
@@ -74,7 +80,6 @@ export interface Lesson {
   isPublished: boolean;
   publishedAt?: Date;
   viewsCount: number;
-  likesCount: number;
   createdAt: Date;
   updatedAt: Date;
   
@@ -82,7 +87,6 @@ export interface Lesson {
   userProgress?: {
     status: 'not_started' | 'in_progress' | 'completed';
     readingProgress: number;
-    liked?: boolean;
     completedAt?: Date;
     timeSpent: number;
   };

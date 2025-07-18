@@ -11,11 +11,17 @@ export interface User {
     theme: 'light' | 'dark';
     notifications: boolean;
     emailUpdates: boolean;
+    cookieConsent?: {
+      analytics: boolean;
+      preferences: boolean;
+      marketing: boolean;
+    };
   };
   isEmailVerified: boolean;
   lastLoginAt: Date;
   createdAt: Date;
   updatedAt: Date;
+  hasCompletedCookieConsent: boolean;
 }
 
 // Theme types
@@ -49,7 +55,6 @@ export interface Lesson {
   isPublished: boolean;
   publishedAt?: Date;
   viewsCount: number;
-  likesCount: number;
   createdAt: Date;
   updatedAt: Date;
   
@@ -57,7 +62,6 @@ export interface Lesson {
   userProgress?: {
     status: 'not_started' | 'in_progress' | 'completed';
     readingProgress: number;
-    liked?: boolean;
     completedAt?: Date;
     timeSpent: number;
   };
@@ -114,7 +118,6 @@ export interface LessonProgress {
   lessonId: string;
   status: 'not_started' | 'in_progress' | 'completed';
   readingProgress: number;
-  liked?: boolean;
   completedAt?: Date;
   lastAccessedAt: Date;
   timeSpent: number;

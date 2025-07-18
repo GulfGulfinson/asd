@@ -1,4 +1,0 @@
-ich habe einige bugs gefunden in der ansicht von lessons (url: http://localhost:3000/lessons): 1. Die beiden Dropdowns "All Themes" und "All Dificulties" sind beide etwas komisch formiert. der Dropdown pfeil liegt leicht ueber der Schrift. 2. Diese beiden Dropdowns funktionieren nocht nicht. Man kann naemlich damit nichts Filtern, sodass wenn man ein Thema gewaehlt hat, dann werden immernoch alle Themen angezeigt. 3. Die Statistiken zu Likes und Aufrufen werden noch nicht dynamisch und mit animation versehen angezeigt. 4. Die suchfunktion geht noch nicht. 5. Bitte fuege einige Weitere Themen in die Datenbank mit seedern ein, sodass wir den button "Load more Lessons" pruefen koennen
-
-
-bei einzelne lesson ansicht noch einbauen, dass die stats abgeschlossen da sind

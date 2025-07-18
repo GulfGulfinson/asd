@@ -14,7 +14,6 @@ export interface ILesson extends Document {
   isPublished: boolean;
   publishedAt?: Date;
   viewsCount: number;
-  likesCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,10 +71,6 @@ const LessonSchema = new Schema<ILesson>({
     type: Date,
   },
   viewsCount: {
-    type: Number,
-    default: 0,
-  },
-  likesCount: {
     type: Number,
     default: 0,
   },

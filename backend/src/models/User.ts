@@ -8,6 +8,11 @@ export interface IUserPreferences {
   language: string;
   timezone: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
+  cookieConsent?: {
+    analytics: boolean;
+    preferences: boolean;
+    marketing: boolean;
+  };
 }
 
 export interface ISubscriptionInfo {
@@ -48,7 +53,8 @@ export interface IUser extends Document {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  
+  hasCompletedCookieConsent: boolean;
+  role: 'user' | 'admin';
   // Methods
   comparePassword(candidatePassword: string): Promise<boolean>;
   generatePasswordResetToken(): string;
@@ -64,6 +70,11 @@ const UserPreferencesSchema = new Schema<IUserPreferences>({
     type: String, 
     enum: ['beginner', 'intermediate', 'advanced'], 
     default: 'beginner' 
+  },
+  cookieConsent: {
+    analytics: { type: Boolean, default: false },
+    preferences: { type: Boolean, default: false },
+    marketing: { type: Boolean, default: false },
   },
 });
 
@@ -155,6 +166,15 @@ const UserSchema = new Schema<IUser>({
   isActive: {
     type: Boolean,
     default: true,
+  },
+  hasCompletedCookieConsent: {
+    type: Boolean,
+    default: false,
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
   },
 }, {
   timestamps: true,

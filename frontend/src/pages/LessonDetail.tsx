@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, Heart, Eye, Share, BookOpen, Loader, RotateCcw, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Eye, Share, BookOpen, Loader, RotateCcw, CheckCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
-import { fetchLessonById } from '../store/slices/lessonsSlice';
-import { completeLesson, saveProgress } from '../store/slices/progressSlice';
+import { fetchLessonById, clearCurrentLesson } from '../store/slices/lessonsSlice';
+import { completeLesson } from '../store/slices/progressSlice';
 import SlideViewer, { SlideViewerRef } from '../components/SlideViewer';
 import { parseContentIntoAdvancedSlides } from '../utils/lessonSlidesParser';
 import { Theme, Lesson } from '../types/api';
+import { lessonsAPI } from '../services/api';
 
 const LessonDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,11 +23,6 @@ const LessonDetail: React.FC = () => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
   // New state for enhanced functionality
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
-  const [viewsCount, setViewsCount] = useState(0);
-  const [isLiking, setIsLiking] = useState(false);
-  const [showLikeAnimation, setShowLikeAnimation] = useState(false);
   const [showShareTooltip, setShowShareTooltip] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const slideViewerRef = useRef<SlideViewerRef>(null);
@@ -38,11 +34,12 @@ const LessonDetail: React.FC = () => {
     }
   }, [dispatch, id]);
 
-  // Update likes and views count when selectedLesson changes
+  // Update likes, views, and isLiked when selectedLesson changes
   useEffect(() => {
     if (selectedLesson) {
-      setLikesCount(selectedLesson.likesCount);
-      setViewsCount(selectedLesson.viewsCount);
+      // setLikesCount(selectedLesson.likesCount); // Removed
+      // setViewsCount(selectedLesson.viewsCount); // Removed
+      // setIsLiked(!!selectedLesson.userProgress?.liked); // Removed
     }
   }, [selectedLesson]);
 
@@ -69,14 +66,27 @@ const LessonDetail: React.FC = () => {
     // Mark lesson as completed and track progress
     setLessonCompleted(true);
     
-    // Dispatch progress actions
-    dispatch(completeLesson({
-      lessonId: lesson._id, // Use _id from lesson
-      timeSpent: timeSpent
-    }));
-    
-    // Save progress to localStorage
-    dispatch(saveProgress());
+    try {
+      // Call the backend API to mark lesson as completed
+      // This will set readingProgress to 100 and status to 'completed'
+      await lessonsAPI.updateProgress(lesson._id, {
+        readingProgress: 100,
+        timeSpent: timeSpent
+      });
+      
+      // Dispatch progress actions to update local state
+      dispatch(completeLesson({
+        lessonId: lesson._id, // Use _id from lesson
+        timeSpent: timeSpent
+      }));
+      
+      console.log('Lesson marked as completed successfully');
+    } catch (error) {
+      console.error('Failed to mark lesson as completed:', error);
+      // Revert local state if API call failed
+      setLessonCompleted(false);
+      return;
+    }
     
     // Navigate to quiz after a short delay to allow user to see completion
     setTimeout(() => {
@@ -84,35 +94,24 @@ const LessonDetail: React.FC = () => {
     }, 1000);
   }, [selectedLesson, navigate, dispatch, lessonCompleted]);
 
-  const handleLikeLesson = useCallback(async () => {
-    if (isLiking) return;
-    
-    setIsLiking(true);
-    
-    try {
-      // Optimistic update
-      const newIsLiked = !isLiked;
-      setIsLiked(newIsLiked);
-      setLikesCount(prev => newIsLiked ? prev + 1 : Math.max(0, prev - 1));
-      
-      // Show like animation
-      if (newIsLiked) {
-        setShowLikeAnimation(true);
-        setTimeout(() => setShowLikeAnimation(false), 1000);
-      }
-      
-      // TODO: In production, make actual API call
-      // await dispatch(likeLesson(id)).unwrap();
-      
-    } catch (error) {
-      // Revert optimistic update on error
-      setIsLiked(prev => !prev);
-      setLikesCount(prev => isLiked ? prev + 1 : Math.max(0, prev - 1));
-      console.error('Failed to like lesson:', error);
-    } finally {
-      setIsLiking(false);
-    }
-  }, [isLiked, isLiking]);
+  // Remove all like-related state, imports, handlers, and UI
+  // const handleLikeLesson = useCallback(async () => {
+  //   if (isLiking) return;
+  //   setIsLiking(true);
+  //   try {
+  //     // Show like animation
+  //     setShowLikeAnimation(true);
+  //     setTimeout(() => setShowLikeAnimation(false), 1000);
+  //     // Call backend to persist like
+  //     if (id) {
+  //       await dispatch(likeLesson(id)).unwrap();
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to like lesson:', error);
+  //   } finally {
+  //     setIsLiking(false);
+  //   }
+  // }, [isLiking, dispatch, id]);
 
   const handleShareLesson = useCallback(async () => {
     const lesson = selectedLesson;
@@ -191,10 +190,10 @@ const LessonDetail: React.FC = () => {
           handleRestartLesson();
         }
         break;
-      case 'l':
-        event.preventDefault();
-        handleLikeLesson();
-        break;
+      // case 'l': // Removed
+      //   event.preventDefault();
+      //   handleLikeLesson();
+      //   break;
       case 's':
         if (event.ctrlKey || event.metaKey) {
           event.preventDefault();
@@ -202,7 +201,7 @@ const LessonDetail: React.FC = () => {
         }
         break;
     }
-  }, [handleRestartLesson, handleLikeLesson, handleShareLesson]);
+  }, [handleRestartLesson, handleShareLesson]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
@@ -210,11 +209,23 @@ const LessonDetail: React.FC = () => {
   }, [handleKeyPress]);
 
   // Helper function to get theme info
-  const getThemeInfo = (themeId: Theme | string) => {
-    if (typeof themeId === 'string') {
-      return { name: 'Theme', color: '#3B82F6' }; // Fallback values
+  const getThemeInfo = (themeId: Theme | string | undefined | null) => {
+    // Handle undefined or null
+    if (!themeId) {
+      return { name: 'Allgemein', color: '#3B82F6', icon: '📚' }; // Fallback values
     }
-    return { name: themeId.name, color: themeId.color };
+    
+    // Handle string ID
+    if (typeof themeId === 'string') {
+      return { name: 'Allgemein', color: '#3B82F6', icon: '📚' }; // Fallback values
+    }
+    
+    // Handle Theme object
+    return { 
+      name: themeId.name || 'Allgemein', 
+      color: themeId.color || '#3B82F6',
+      icon: themeId.icon || '📚'
+    };
   };
 
   // Use selectedLesson as the display lesson
@@ -241,6 +252,7 @@ const LessonDetail: React.FC = () => {
           </p>
           <Link 
             to="/lessons"
+            state={{ fromLessonDetail: true }}
             className="btn-primary"
           >
             Zurück zu den Lektionen
@@ -266,6 +278,7 @@ const LessonDetail: React.FC = () => {
         <div className="mb-6 flex items-center justify-between">
           <Link 
             to="/lessons"
+            state={{ fromLessonDetail: true }}
             className="inline-flex items-center text-primary-600 hover:text-primary-700"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -296,7 +309,7 @@ const LessonDetail: React.FC = () => {
           <div className="text-sm text-blue-800">
             <span className="font-medium">Tastaturkürzel:</span>
             <span className="ml-4">R: Neustart</span>
-            <span className="ml-4">L: Like</span>
+            {/* <span className="ml-4">L: Like</span> */}
             <span className="ml-4">Ctrl+S: Teilen</span>
             <span className="ml-4">← → Pfeiltasten: Navigation</span>
           </div>
@@ -325,8 +338,8 @@ const LessonDetail: React.FC = () => {
               lessonTheme={{
                 name: themeInfo.name,
                 color: themeInfo.color,
-                icon: typeof displayLesson.themeId === 'object' ? displayLesson.themeId.icon : '📚',
-                slug: typeof displayLesson.themeId === 'object' ? displayLesson.themeId.slug : 'general'
+                icon: themeInfo.icon,
+                slug: typeof displayLesson.themeId === 'object' && displayLesson.themeId?.slug ? displayLesson.themeId.slug : 'general'
               }}
               lessonDifficulty={displayLesson.difficulty}
               estimatedReadTime={displayLesson.estimatedReadTime}
@@ -351,36 +364,6 @@ const LessonDetail: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center space-x-4">
-                  {/* Enhanced Like Button with Animation */}
-                  <div className="relative">
-                    <button
-                      onClick={handleLikeLesson}
-                      disabled={isLiking}
-                      className={`flex items-center space-x-1 text-sm transition-all duration-200 ${
-                        isLiked 
-                          ? 'text-red-500 hover:text-red-600' 
-                          : 'text-gray-500 hover:text-red-500'
-                      } disabled:opacity-50`}
-                      title="Like (L)"
-                    >
-                      <Heart 
-                        className={`h-4 w-4 transition-all duration-200 ${
-                          isLiked ? 'fill-current' : ''
-                        } ${showLikeAnimation ? 'animate-pulse scale-125' : ''}`} 
-                      />
-                      <span className="font-medium">{likesCount}</span>
-                    </button>
-                    
-                    {/* Like Animation */}
-                    {showLikeAnimation && (
-                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
-                        <div className="animate-bounce text-red-500 text-lg font-bold">
-                          +1 ❤️
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
                   {/* Enhanced Share Button */}
                   <div className="relative">
                     <button
@@ -413,7 +396,7 @@ const LessonDetail: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-1">
                   <Eye className="h-4 w-4" />
-                  <span className="font-medium">{viewsCount.toLocaleString()} Aufrufe</span>
+                  <span className="font-medium">{displayLesson.viewsCount.toLocaleString()} Aufrufe</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <BookOpen className="h-4 w-4" />
@@ -450,6 +433,7 @@ const LessonDetail: React.FC = () => {
       <div className="mb-6 flex items-center justify-between">
         <Link 
           to="/lessons"
+          state={{ fromLessonDetail: true }}
           className="inline-flex items-center text-primary-600 hover:text-primary-700"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -508,17 +492,17 @@ const LessonDetail: React.FC = () => {
           </div>
           <div className="flex items-center space-x-1">
             <Eye className="h-4 w-4" />
-            <span className="font-medium">{viewsCount.toLocaleString()} Aufrufe</span>
+            <span className="font-medium">{displayLesson.viewsCount.toLocaleString()} Aufrufe</span>
           </div>
-          <div className="flex items-center space-x-1">
+          {/* <div className="flex items-center space-x-1">
             <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-current' : ''}`} />
             <span className="font-medium">{likesCount} Likes</span>
-          </div>
+          </div> */}
         </div>
 
         {/* Enhanced Actions */}
         <div className="flex items-center space-x-4 mb-8">
-          <div className="relative">
+          {/* <div className="relative">
             <button 
               onClick={handleLikeLesson}
               disabled={isLiking}
@@ -537,7 +521,7 @@ const LessonDetail: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
           
           <div className="relative">
             <button 

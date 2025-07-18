@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Clock, Heart, Eye, Search, ChevronDown, Loader, Filter, X, BookOpen, CheckCircle, Trophy, AlertCircle, PlayCircle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchLessons, loadMoreLessons, resetLessons } from '../store/slices/lessonsSlice';
@@ -7,6 +7,7 @@ import { fetchThemes } from '../store/slices/themesSlice';
 import { Lesson, Theme } from '../types';
 
 const Lessons: React.FC = () => {
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const { lessons, loading: lessonsLoading, error, pagination } = useAppSelector(state => state.lessons);
   const { themes = [], loading: themesLoading } = useAppSelector(state => state.themes || { themes: [], loading: false });
@@ -66,6 +67,22 @@ const Lessons: React.FC = () => {
     
     dispatch(fetchLessons(params));
   }, [dispatch, selectedTheme, selectedDifficulty, searchQuery, selectedStatus, selectedQuizStatus, isAuthenticated]);
+
+  // Refetch lessons when returning from a detail page
+  useEffect(() => {
+    if (location.state && location.state.fromLessonDetail) {
+      const params: any = {
+        page: 1,
+        limit: 12
+      };
+      if (selectedTheme) params.themeId = selectedTheme;
+      if (selectedDifficulty) params.difficulty = selectedDifficulty;
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (isAuthenticated && selectedStatus) params.status = selectedStatus;
+      if (isAuthenticated && selectedQuizStatus) params.quizStatus = selectedQuizStatus;
+      dispatch(fetchLessons(params));
+    }
+  }, [location.state]);
 
   // Debounced search handler
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -363,41 +380,30 @@ interface LessonCardProps {
 }
 
 const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes = [], isAuthenticated }) => {
-  const [displayStats, setDisplayStats] = useState({ views: 0, likes: 0 });
+  const [displayViews, setDisplayViews] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Animate stats on mount
+  // Animate views on mount
   useEffect(() => {
-    const animateStats = () => {
+    const animateViews = () => {
       const duration = 1500; // 1.5 seconds
       const steps = 60; // 60 FPS
       const viewIncrement = lesson.viewsCount / steps;
-      const likeIncrement = lesson.likesCount / steps;
-      
       let currentStep = 0;
       const interval = setInterval(() => {
         currentStep++;
-        setDisplayStats({
-          views: Math.min(Math.floor(viewIncrement * currentStep), lesson.viewsCount),
-          likes: Math.min(Math.floor(likeIncrement * currentStep), lesson.likesCount)
-        });
-        
+        setDisplayViews(Math.min(Math.floor(viewIncrement * currentStep), lesson.viewsCount));
         if (currentStep >= steps) {
           clearInterval(interval);
-          setDisplayStats({
-            views: lesson.viewsCount,
-            likes: lesson.likesCount
-          });
+          setDisplayViews(lesson.viewsCount);
         }
       }, duration / steps);
-      
       return () => clearInterval(interval);
     };
-
     // Add a small random delay to stagger animations
-    const timer = setTimeout(animateStats, Math.random() * 500);
+    const timer = setTimeout(animateViews, Math.random() * 500);
     return () => clearTimeout(timer);
-  }, [lesson.viewsCount, lesson.likesCount]);
+  }, [lesson.viewsCount]);
 
   const getThemeColor = () => {
     if (typeof lesson.themeId === 'object' && lesson.themeId.color) {
@@ -460,7 +466,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes = [], isAuthenti
 
     const indicators = [];
 
-    // Lesson completion status
+    // Lesson completion status - prioritize lessonCompleted over userProgress status
     if (lesson.lessonCompleted) {
       indicators.push(
         <div key="lesson-completed" className="flex items-center space-x-1 text-green-600" title="Lektion abgeschlossen">
@@ -582,11 +588,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, themes = [], isAuthenti
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1 transition-colors hover:text-primary-600">
               <Eye className="h-4 w-4" />
-              <span className="font-medium tabular-nums">{formatNumber(displayStats.views)}</span>
-            </div>
-            <div className="flex items-center space-x-1 transition-colors hover:text-red-500">
-              <Heart className="h-4 w-4" />
-              <span className="font-medium tabular-nums">{formatNumber(displayStats.likes)}</span>
+              <span className="font-medium tabular-nums">{formatNumber(displayViews)}</span>
             </div>
           </div>
           <span className="text-xs text-gray-400">

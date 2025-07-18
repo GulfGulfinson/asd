@@ -11,17 +11,29 @@ import LessonDetail from './pages/LessonDetail';
 import QuizPage from './pages/QuizPage';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
+import Impressum from './pages/Impressum';
+import Datenschutz from './pages/Datenschutz';
+import Cookies from './pages/Cookies';
+import CookieConsentBanner from './components/CookieConsentBanner';
+import Admin from './pages/Admin';
+import AdminLessons from './pages/AdminLessons';
+import AdminQuizzes from './pages/AdminQuizzes';
+import AdminThemes from './pages/AdminThemes';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <CookieConsentBanner />
         <Layout>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/impressum" element={<Impressum />} />
+            <Route path="/datenschutz" element={<Datenschutz />} />
+            <Route path="/cookies" element={<Cookies />} />
             
             {/* Protected routes */}
             <Route path="/dashboard" element={
@@ -49,6 +61,18 @@ function App() {
                 <Profile />
               </ProtectedRoute>
             } />
+            
+            {/* Admin routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute adminOnly>
+                <Admin />
+              </ProtectedRoute>
+            }>
+              <Route path="lessons" element={<AdminLessons />} />
+              <Route path="quizzes" element={<AdminQuizzes />} />
+              <Route path="themes" element={<AdminThemes />} />
+              {/* Room for more: users, analytics, etc. */}
+            </Route>
             
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/" replace />} />

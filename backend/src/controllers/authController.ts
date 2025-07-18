@@ -216,9 +216,14 @@ export const updatePreferences = async (
       return;
     }
 
+    let update: any = { preferences };
+    if (preferences.cookieConsent) {
+      update.hasCompletedCookieConsent = true;
+    }
+
     const user = await User.findByIdAndUpdate(
       userId,
-      { preferences },
+      update,
       { new: true, runValidators: true }
     );
 

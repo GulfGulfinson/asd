@@ -1,15 +1,17 @@
 import { Router } from 'express';
-import {
-  getAllThemes,
-  getThemeBySlug,
-  getThemesWithStats
+import { 
+  getAllThemes, 
+  getThemeById, 
+  getThemeLessons,
+  getThemeStats
 } from '../controllers/themeController';
 
 const router = Router();
 
 // Public routes
 router.get('/', getAllThemes);
-router.get('/stats', getThemesWithStats);
-router.get('/:slug', getThemeBySlug);
+router.get('/stats', getThemeStats);
+router.get('/:id', getThemeById);
+router.get('/:id/lessons', getThemeLessons);
 
 export default router; 

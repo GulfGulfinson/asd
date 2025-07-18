@@ -1,9 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { LessonProgress, QuizAttempt, IUser } from '../models';
-
-interface AuthRequest extends Request {
-  user?: IUser;
-}
+import { Response, NextFunction } from 'express';
+import { LessonProgress, QuizAttempt } from '../models';
+import { AuthRequest } from '../middleware/auth';
 
 // Get user dashboard data
 export const getDashboard = async (
@@ -22,14 +19,16 @@ export const getDashboard = async (
       return;
     }
     
-    // Get learning statistics
+    // Get comprehensive learning statistics
     const [
       totalLessons,
       completedLessons,
       inProgressLessons,
       totalQuizzes,
       passedQuizzes,
-      recentProgress
+      recentProgress,
+      quizStats,
+      timeStats
     ] = await Promise.all([
       LessonProgress.countDocuments({ userId }),
       LessonProgress.countDocuments({ userId, status: 'completed' }),
@@ -43,47 +42,80 @@ export const getDashboard = async (
           populate: { path: 'themeId', select: 'name color' }
         })
         .sort({ lastAccessedAt: -1 })
-        .limit(5)
+        .limit(5),
+      
+      // Comprehensive quiz statistics
+      QuizAttempt.aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: null,
+            totalAttempts: { $sum: 1 },
+            averageScore: { $avg: '$score' },
+            passedQuizzes: {
+              $sum: { $cond: ['$passed', 1, 0] }
+            },
+            totalTimeSpent: { $sum: '$timeSpent' },
+            highestScore: { $max: '$score' },
+            lowestScore: { $min: '$score' }
+          }
+        }
+      ]),
+      
+      // Time statistics
+      LessonProgress.aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: null,
+            totalTimeSpent: { $sum: '$timeSpent' }
+          }
+        }
+      ])
     ]);
     
     // Calculate streak
     const streak = await calculateLearningStreak(userId);
     
-    // Calculate total time spent
-    const timeStats = await LessonProgress.aggregate([
-      { $match: { userId } },
-      {
-        $group: {
-          _id: null,
-          totalTimeSpent: { $sum: '$timeSpent' }
-        }
-      }
-    ]);
-    
-    const totalTimeSpent = timeStats[0]?.totalTimeSpent || 0;
+    const totalTimeSpent = (timeStats[0]?.totalTimeSpent || 0) + (quizStats[0]?.totalTimeSpent || 0);
+    const quizStatsData = quizStats[0] || {
+      totalAttempts: 0,
+      averageScore: 0,
+      passedQuizzes: 0,
+      totalTimeSpent: 0,
+      highestScore: 0,
+      lowestScore: 0
+    };
     
     // Get achievements (mock for now)
     const achievements = [
       {
         id: 'first_lesson',
-        name: 'First Lesson',
-        description: 'Complete your first lesson',
+        name: 'Erste Lektion',
+        description: 'Erste Lektion abgeschlossen',
         earned: completedLessons > 0,
         earnedAt: completedLessons > 0 ? new Date() : null
       },
       {
         id: 'quiz_master',
-        name: 'Quiz Master',
-        description: 'Pass 5 quizzes',
+        name: 'Quiz-Meister',
+        description: '5 Quizzes bestanden',
         earned: passedQuizzes >= 5,
         earnedAt: passedQuizzes >= 5 ? new Date() : null
       },
       {
         id: 'consistent_learner',
-        name: 'Consistent Learner',
-        description: 'Maintain a 7-day streak',
+        name: 'Beständiger Lerner',
+        description: '7 Tage-Streak erreicht',
         earned: streak >= 7,
         earnedAt: streak >= 7 ? new Date() : null
+      },
+      {
+        id: 'quiz_perfection',
+        name: 'Quiz-Perfektion',
+        description: 'Ein Quiz mit 100% bestanden',
+        earned: quizStatsData.highestScore >= 100,
+        earnedAt: quizStatsData.highestScore >= 100 ? new Date() : null
       }
     ];
     
@@ -97,7 +129,17 @@ export const getDashboard = async (
           totalQuizzes,
           passedQuizzes,
           streak,
-          totalTimeSpent
+          totalTimeSpent,
+          averageScore: Math.round(quizStatsData.averageScore || 0)
+        },
+        quizStatistics: {
+          totalAttempts: quizStatsData.totalAttempts,
+          averageScore: Math.round(quizStatsData.averageScore || 0),
+          passedQuizzes: quizStatsData.passedQuizzes,
+          quizTimeSpent: quizStatsData.totalTimeSpent,
+          highestScore: quizStatsData.highestScore,
+          lowestScore: quizStatsData.lowestScore || 0,
+          passRate: quizStatsData.totalAttempts > 0 ? Math.round((quizStatsData.passedQuizzes / quizStatsData.totalAttempts) * 100) : 0
         },
         recentProgress,
         achievements

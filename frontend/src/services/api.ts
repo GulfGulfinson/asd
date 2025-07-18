@@ -72,7 +72,10 @@ export const authAPI = {
 export const themesAPI = {
   getAll: async () => {
     const response = await api.get('/themes');
-    return response.data;
+    return {
+      ...response.data,
+      data: response.data.data?.themes || response.data.data || response.data
+    };
   },
   
   getById: async (id: string) => {
@@ -82,6 +85,11 @@ export const themesAPI = {
   
   getLessons: async (themeId: string) => {
     const response = await api.get(`/themes/${themeId}/lessons`);
+    return response.data;
+  },
+  
+  getStats: async () => {
+    const response = await api.get('/themes/stats');
     return response.data;
   },
 };
@@ -111,6 +119,25 @@ export const lessonsAPI = {
     return response.data;
   },
   
+  getPopular: async (limit?: number) => {
+    const queryParams = new URLSearchParams();
+    if (limit) queryParams.append('limit', limit.toString());
+    
+    const url = queryParams.toString() ? `/lessons/popular?${queryParams.toString()}` : '/lessons/popular';
+    const response = await api.get(url);
+    return response.data;
+  },
+  
+  getFeatured: async (themeId?: string, limit?: number) => {
+    const queryParams = new URLSearchParams();
+    if (themeId) queryParams.append('themeId', themeId);
+    if (limit) queryParams.append('limit', limit.toString());
+    
+    const url = queryParams.toString() ? `/lessons/featured?${queryParams.toString()}` : '/lessons/featured';
+    const response = await api.get(url);
+    return response.data;
+  },
+  
   getById: async (id: string) => {
     const response = await api.get(`/lessons/${id}`);
     return response.data;
@@ -131,18 +158,13 @@ export const lessonsAPI = {
     return response.data;
   },
   
-  likeLesson: async (id: string) => {
-    const response = await api.post(`/lessons/${id}/like`);
-    return response.data;
-  },
-  
   shareLesson: async (id: string, platform?: string, method?: string) => {
     const response = await api.post(`/lessons/${id}/share`, { platform, method });
     return response.data;
   },
   
   updateProgress: async (id: string, progress: { readingProgress?: number; timeSpent?: number }) => {
-    const response = await api.post(`/lessons/${id}/progress`, progress);
+    const response = await api.put(`/lessons/${id}/progress`, progress);
     return response.data;
   },
   
@@ -152,7 +174,7 @@ export const lessonsAPI = {
   },
   
   markAsCompleted: async (lessonId: string) => {
-    const response = await api.post(`/lessons/${lessonId}/progress`, { 
+    const response = await api.put(`/lessons/${lessonId}/progress`, { 
       readingProgress: 100,
       timeSpent: 0 // This would be calculated properly in a real implementation
     });
@@ -176,17 +198,39 @@ export const quizzesAPI = {
     const response = await api.get(`/quizzes/${quizId}/attempts`);
     return response.data;
   },
+
+  // --- ADMIN QUIZ CRUD ---
+  adminList: async () => {
+    const response = await api.get('/admin/quizzes');
+    return response.data;
+  },
+  adminGet: async (id: string) => {
+    const response = await api.get(`/admin/quizzes/${id}`);
+    return response.data;
+  },
+  adminCreate: async (quiz: any) => {
+    const response = await api.post('/admin/quizzes', quiz);
+    return response.data;
+  },
+  adminUpdate: async (id: string, quiz: any) => {
+    const response = await api.put(`/admin/quizzes/${id}`, quiz);
+    return response.data;
+  },
+  adminDelete: async (id: string) => {
+    const response = await api.delete(`/admin/quizzes/${id}`);
+    return response.data;
+  },
 };
 
 // User API
 export const userAPI = {
   getDashboard: async () => {
-    const response = await api.get('/user/dashboard');
+    const response = await api.get('/users/dashboard');
     return response.data;
   },
   
   getStatistics: async () => {
-    const response = await api.get('/user/statistics');
+    const response = await api.get('/users/statistics');
     return response.data;
   },
   
@@ -195,9 +239,13 @@ export const userAPI = {
     lastName: string;
     preferences: any;
   }>) => {
-    const response = await api.put('/user/profile', userData);
+    const response = await api.put('/auth/profile', userData);
+    return response.data;
+  },
+  updatePreferences: async (preferences: any) => {
+    const response = await api.put('/auth/preferences', preferences);
     return response.data;
   },
 };
 
-export default api; 
+export default api;

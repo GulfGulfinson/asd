@@ -1,10 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Settings, Bell, Lock } from 'lucide-react';
+import { userAPI } from '../services/api';
+import { User, Settings, Bell, Lock, BarChart2, Sliders, Megaphone, Cookie } from 'lucide-react';
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
+  const [cookieConsent, setCookieConsent] = useState(user?.preferences?.cookieConsent || {
+    analytics: false,
+    preferences: false,
+    marketing: false,
+  });
+  const [consentSaved, setConsentSaved] = useState(false);
+
+  useEffect(() => {
+    setCookieConsent(user?.preferences?.cookieConsent || {
+      analytics: false,
+      preferences: false,
+      marketing: false,
+    });
+  }, [user]);
+
+  const handleConsentChange = (key: 'analytics' | 'preferences' | 'marketing', value: boolean) => {
+    setCookieConsent((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveConsent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    await userAPI.updatePreferences({
+      ...user.preferences,
+      cookieConsent,
+    });
+    localStorage.setItem('cookieConsent', JSON.stringify(cookieConsent));
+    setConsentSaved(true);
+    setTimeout(() => setConsentSaved(false), 2000);
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -130,7 +161,7 @@ const Profile: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900">Learning Preferences</h3>
           </div>
           <div className="card-body">
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSaveConsent}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Preferred Language
@@ -167,10 +198,29 @@ const Profile: React.FC = () => {
                 />
               </div>
 
-              <div className="flex justify-end">
-                <button type="submit" className="btn-primary">
-                  Save Preferences
-                </button>
+              <div className="mt-8">
+                <h4 className="text-md font-semibold flex items-center mb-2"><Cookie className="h-5 w-5 mr-2 text-primary-600" /> Cookie Consent</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <BarChart2 className="h-5 w-5 text-primary-500" />
+                    <span className="flex-1">Analytics</span>
+                    <input type="checkbox" checked={cookieConsent.analytics} onChange={e => handleConsentChange('analytics', e.target.checked)} className="form-checkbox h-5 w-5 text-primary-600" />
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Sliders className="h-5 w-5 text-primary-500" />
+                    <span className="flex-1">Preferences</span>
+                    <input type="checkbox" checked={cookieConsent.preferences} onChange={e => handleConsentChange('preferences', e.target.checked)} className="form-checkbox h-5 w-5 text-primary-600" />
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Megaphone className="h-5 w-5 text-primary-500" />
+                    <span className="flex-1">Marketing</span>
+                    <input type="checkbox" checked={cookieConsent.marketing} onChange={e => handleConsentChange('marketing', e.target.checked)} className="form-checkbox h-5 w-5 text-primary-600" />
+                  </label>
+                </div>
+                <div className="flex justify-end mt-4">
+                  <button type="submit" className="btn-primary">Save Cookie Consent</button>
+                </div>
+                {consentSaved && <div className="text-green-600 mt-2">Consent saved!</div>}
               </div>
             </form>
           </div>

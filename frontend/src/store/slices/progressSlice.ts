@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { userAPI } from '../../services/api';
 
 // Types
 export interface LessonProgress {
@@ -23,6 +24,7 @@ export interface UserStats {
   totalQuizzesPassed: number;
   totalTimeSpent: number; // in seconds
   averageQuizScore: number;
+  highestQuizScore: number; // Add highest quiz score for best performance display
   totalPoints: number;
   currentLevel: number;
   pointsToNextLevel: number;
@@ -47,23 +49,25 @@ export interface ProgressState {
   error: string | null;
 }
 
+// Initial state
 const initialState: ProgressState = {
-  lessonProgress: {},
+  userStats: {
+    totalLessonsCompleted: 0,
+    totalQuizzesPassed: 0,
+    totalTimeSpent: 0,
+    averageQuizScore: 0,
+    highestQuizScore: 0, // Initialize highest quiz score
+    totalPoints: 0,
+    currentLevel: 1,
+    pointsToNextLevel: 100,
+  },
   dailyStreak: {
     currentStreak: 0,
     longestStreak: 0,
     lastActivityDate: null,
     streakStartDate: null,
   },
-  userStats: {
-    totalLessonsCompleted: 0,
-    totalQuizzesPassed: 0,
-    totalTimeSpent: 0,
-    averageQuizScore: 0,
-    totalPoints: 0,
-    currentLevel: 1,
-    pointsToNextLevel: 100,
-  },
+  lessonProgress: {},
   achievements: [],
   todayCompleted: false,
   loading: false,
@@ -134,53 +138,67 @@ const calculateLevel = (totalPoints: number): { level: number; pointsToNext: num
   return { level, pointsToNext };
 };
 
-// Async thunks (would normally call API, using localStorage for now)
+// Replace the mock loadProgress thunk with real API call
 export const loadProgress = createAsyncThunk(
   'progress/load',
   async (_, { rejectWithValue }) => {
     try {
-      const stored = localStorage.getItem('dailylearn_progress');
-      if (stored) {
-        const data = JSON.parse(stored);
-        // Convert date strings back to Date objects
-        if (data.dailyStreak.lastActivityDate) {
-          data.dailyStreak.lastActivityDate = new Date(data.dailyStreak.lastActivityDate);
-        }
-        if (data.dailyStreak.streakStartDate) {
-          data.dailyStreak.streakStartDate = new Date(data.dailyStreak.streakStartDate);
-        }
-        data.achievements = data.achievements?.map((ach: any) => ({
-          ...ach,
-          unlockedAt: new Date(ach.unlockedAt)
-        })) || [];
-        
-        Object.keys(data.lessonProgress || {}).forEach(lessonId => {
-          if (data.lessonProgress[lessonId].completedAt) {
-            data.lessonProgress[lessonId].completedAt = new Date(data.lessonProgress[lessonId].completedAt);
-          }
-        });
-        
-        return data;
-      }
-      return initialState;
-    } catch (error) {
-      return rejectWithValue('Failed to load progress');
+      const response = await userAPI.getDashboard();
+      
+      // Transform backend data to match frontend structure
+      const { stats, quizStatistics, recentProgress, achievements } = response.data;
+      
+      return {
+        userStats: {
+          totalLessonsCompleted: stats.completedLessons || 0,
+          totalQuizzesPassed: stats.passedQuizzes || 0,
+          totalTimeSpent: stats.totalTimeSpent || 0,
+          averageQuizScore: quizStatistics?.averageScore || 0,
+          // Use the actual highest score from quiz statistics for best performance
+          highestQuizScore: quizStatistics?.highestScore || 0,
+          totalPoints: (stats.completedLessons * 50) + (stats.passedQuizzes * 25), // Calculate points based on completions
+          currentLevel: Math.floor(((stats.completedLessons * 50) + (stats.passedQuizzes * 25)) / 100) + 1,
+          pointsToNextLevel: 100 - (((stats.completedLessons * 50) + (stats.passedQuizzes * 25)) % 100),
+        },
+        dailyStreak: {
+          currentStreak: stats.streak || 0,
+          longestStreak: stats.streak || 0, // Backend doesn't track longest streak yet
+          lastActivityDate: null, // Would need to be calculated from recent progress
+          streakStartDate: null,
+        },
+        achievements: achievements?.filter((ach: any) => ach.earned).map((ach: any) => ({
+          id: ach.id,
+          name: ach.name,
+          description: ach.description,
+          icon: getAchievementIcon(ach.id),
+          unlockedAt: ach.earnedAt ? new Date(ach.earnedAt) : new Date(),
+          category: getAchievementCategory(ach.id),
+        })) || [],
+        todayCompleted: false, // Would need backend logic to determine this
+        lessonProgress: {}, // Not needed for dashboard, lessons page handles this
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.error || 'Failed to load progress');
     }
   }
 );
 
-export const saveProgress = createAsyncThunk(
-  'progress/save',
-  async (_, { getState, rejectWithValue }) => {
-    try {
-      const state = (getState() as any).progress;
-      localStorage.setItem('dailylearn_progress', JSON.stringify(state));
-      return state;
-    } catch (error) {
-      return rejectWithValue('Failed to save progress');
-    }
-  }
-);
+// Helper functions for achievements
+const getAchievementIcon = (id: string): string => {
+  const iconMap: Record<string, string> = {
+    'first_lesson': '🌟',
+    'quiz_master': '🎯',
+    'consistent_learner': '🔥',
+  };
+  return iconMap[id] || '🏆';
+};
+
+const getAchievementCategory = (id: string): 'streak' | 'completion' | 'quiz' | 'time' | 'special' => {
+  if (id.includes('streak') || id.includes('consistent')) return 'streak';
+  if (id.includes('quiz')) return 'quiz';
+  if (id.includes('lesson')) return 'completion';
+  return 'special';
+};
 
 // Progress slice
 const progressSlice = createSlice({
@@ -372,16 +390,6 @@ const progressSlice = createSlice({
         state.error = null;
       })
       .addCase(loadProgress.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(saveProgress.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(saveProgress.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(saveProgress.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

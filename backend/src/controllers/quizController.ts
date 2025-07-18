@@ -298,3 +298,68 @@ export const getQuizStatsByLesson = async (
     next(error);
   }
 }; 
+
+// --- ADMIN QUIZ CRUD ---
+
+// List all quizzes (with lesson info)
+export const adminListQuizzes = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const quizzes = await Quiz.find().populate('lessonId', 'title');
+    res.json({ success: true, data: quizzes });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get a single quiz by ID
+export const adminGetQuiz = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const quiz = await Quiz.findById(req.params.id).populate('lessonId', 'title');
+    if (!quiz) {
+      res.status(404).json({ success: false, error: 'Quiz not found' });
+      return;
+    }
+    res.json({ success: true, data: quiz });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Create a new quiz
+export const adminCreateQuiz = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const quiz = new Quiz(req.body);
+    await quiz.save();
+    res.status(201).json({ success: true, data: quiz });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update a quiz
+export const adminUpdateQuiz = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const quiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!quiz) {
+      res.status(404).json({ success: false, error: 'Quiz not found' });
+      return;
+    }
+    res.json({ success: true, data: quiz });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete a quiz
+export const adminDeleteQuiz = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const quiz = await Quiz.findByIdAndDelete(req.params.id);
+    if (!quiz) {
+      res.status(404).json({ success: false, error: 'Quiz not found' });
+      return;
+    }
+    res.json({ success: true, message: 'Quiz deleted' });
+  } catch (error) {
+    next(error);
+  }
+}; 

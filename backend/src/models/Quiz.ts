@@ -47,8 +47,7 @@ const QuizQuestionSchema = new Schema<IQuizQuestion>({
   },
   points: {
     type: Number,
-    required: [true, 'Points are required'],
-    min: [1, 'Points must be at least 1'],
+    required: false,
   },
 });
 

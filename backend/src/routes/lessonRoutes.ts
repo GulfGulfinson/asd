@@ -3,26 +3,28 @@ import {
   getAllLessons,
   getLessonById,
   getTodaysLesson,
-  likeLesson,
   updateProgress,
   getUserProgress,
   getLessonStats,
-  shareLesson
+  shareLesson,
+  getPopularLessons,
+  getFeaturedLessons
 } from '../controllers/lessonController';
 import { authenticate, optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
-// Protected routes (must come first to avoid route conflicts)
-router.get('/today', authenticate, getTodaysLesson);
-router.post('/:id/like', authenticate, likeLesson);
-router.post('/:id/progress', authenticate, updateProgress);
-router.get('/:id/progress', authenticate, getUserProgress);
-
-// Public routes with optional auth
+// Public routes with optional auth for progress tracking
 router.get('/', optionalAuth, getAllLessons);
-router.get('/:id', getLessonById);
+router.get('/popular', getPopularLessons);
+router.get('/featured', getFeaturedLessons);
+router.get('/today', authenticate, getTodaysLesson);
+router.get('/:id', optionalAuth, getLessonById);
 router.get('/:id/stats', getLessonStats);
-router.post('/:id/share', shareLesson);
+
+// Protected routes
+router.post('/:id/share', authenticate, shareLesson);
+router.put('/:id/progress', authenticate, updateProgress);
+router.get('/:id/progress', authenticate, getUserProgress);
 
 export default router; 

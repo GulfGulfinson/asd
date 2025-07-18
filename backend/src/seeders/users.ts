@@ -37,7 +37,9 @@ export const seedUsers = async () => {
           experiencePoints: 2250,
           level: 3,
           lastActivityDate: new Date()
-        }
+        },
+        role: 'user',
+        isActive: true
       },
       {
         email: 'jane.smith@example.com',
@@ -68,7 +70,9 @@ export const seedUsers = async () => {
           experiencePoints: 1100,
           level: 2,
           lastActivityDate: new Date()
-        }
+        },
+        role: 'user',
+        isActive: true
       },
       {
         email: 'alex.johnson@example.com',
@@ -100,7 +104,9 @@ export const seedUsers = async () => {
           experiencePoints: 3900,
           level: 4,
           lastActivityDate: new Date()
-        }
+        },
+        role: 'user',
+        isActive: true
       },
       {
         email: 'sarah.wilson@example.com',
@@ -131,7 +137,9 @@ export const seedUsers = async () => {
           experiencePoints: 600,
           level: 1,
           lastActivityDate: new Date()
-        }
+        },
+        role: 'user',
+        isActive: true
       },
       {
         email: 'mike.brown@example.com',
@@ -163,7 +171,9 @@ export const seedUsers = async () => {
           experiencePoints: 2800,
           level: 3,
           lastActivityDate: new Date()
-        }
+        },
+        role: 'user',
+        isActive: true
       },
       {
         email: 'emma.davis@example.com',
@@ -194,16 +204,50 @@ export const seedUsers = async () => {
           experiencePoints: 1400,
           level: 2,
           lastActivityDate: new Date()
-        }
+        },
+        role: 'user',
+        isActive: true
+      },
+      {
+        email: 'admin@dailylearn.com',
+        password: await bcrypt.hash('admin123', 12),
+        username: 'admin',
+        firstName: 'Admin',
+        lastName: 'User',
+        isEmailVerified: true,
+        preferences: {
+          themes: [],
+          notificationsEnabled: true,
+          notificationTime: '09:00',
+          language: 'de',
+          timezone: 'Europe/Berlin',
+          difficulty: 'intermediate'
+        },
+        subscription: {
+          plan: 'premium',
+          status: 'active',
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31')
+        },
+        learningStats: {
+          currentStreak: 0,
+          longestStreak: 0,
+          totalLessonsCompleted: 0,
+          totalQuizzesCompleted: 0,
+          averageQuizScore: 0,
+          experiencePoints: 0,
+          level: 1,
+          lastActivityDate: new Date()
+        },
+        role: 'admin',
+        isActive: true
       }
     ];
 
     const createdUsers = await User.insertMany(userData);
-    
-    console.log(`✅ Created ${createdUsers.length} users`);
     return createdUsers;
   } catch (error) {
-    console.error('❌ Error seeding users:', error);
-    throw error;
+    console.error('Error seeding users:', error);
+    process.exit(1);
   }
-}; 
+};

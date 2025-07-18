@@ -6,6 +6,71 @@ const calculateReadTime = (content: string): number => {
   return Math.ceil(words / wordsPerMinute);
 };
 
+// Realistic image URLs for lessons
+const getImageForTheme = (themeSlug: string, index: number = 0): string => {
+  const imageMap: Record<string, string[]> = {
+    'gesundheit-fitness': [
+      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600',
+      'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600'
+    ],
+    'sprachen-lernen': [
+      'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600'
+    ],
+    'psychologie': [
+      'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'
+    ],
+    'business': [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600',
+      'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=600'
+    ],
+    'design-ux': [
+      'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=600',
+      'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=600'
+    ],
+    'produktivitaet': [
+      'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=600',
+      'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=600'
+    ],
+    'marketing': [
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600',
+      'https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=600'
+    ],
+    'persoenlichkeit': [
+      'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=600',
+      'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600'
+    ],
+    'technologie': [
+      'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=600',
+      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600'
+    ],
+    'wissenschaft': [
+      'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=600',
+      'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=600'
+    ],
+    'kreativitaet': [
+      'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=600',
+      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'
+    ],
+    'umwelt': [
+      'https://images.unsplash.com/photo-1569163139394-de4e5f43e4e3?w=600',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600'
+    ],
+    'geschichte': [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600',
+      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600'
+    ],
+    'finanzen': [
+      'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=600',
+      'https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=600'
+    ]
+  };
+  
+  const images = imageMap[themeSlug] || ['https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600'];
+  return images[index % images.length];
+};
+
 export const seedLessons = async (themes: any[]) => {
   try {
     // Clear existing lessons
@@ -14,7 +79,7 @@ export const seedLessons = async (themes: any[]) => {
     const lessons = [];
     
     for (const theme of themes) {
-      // Create 2 lessons per theme
+      // Create 3-4 lessons per theme for better content variety
       const lessonsForTheme = await createLessonsForTheme(theme);
       lessons.push(...lessonsForTheme);
     }
@@ -31,18 +96,18 @@ export const seedLessons = async (themes: any[]) => {
 const createLessonsForTheme = async (theme: any) => {
   const lessonTemplates = getLessonTemplatesForTheme(theme.slug);
   
-  return lessonTemplates.map((template) => ({
+  return lessonTemplates.map((template, index) => ({
     title: template.title,
     content: template.content,
     summary: template.summary,
+    imageUrl: getImageForTheme(theme.slug, index),
     themeId: theme._id,
     difficulty: template.difficulty,
     estimatedReadTime: calculateReadTime(template.content),
     tags: template.tags,
     isPublished: true,
     publishedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-    viewsCount: Math.floor(Math.random() * 1000) + 50,
-    likesCount: Math.floor(Math.random() * 100) + 10
+    viewsCount: Math.floor(Math.random() * 2000) + 100,
   }));
 };
 
@@ -873,6 +938,694 @@ Wahre Stärke kommt von innen!
         `,
         difficulty: 'intermediate',
         tags: ['selbstbewusstsein', 'charisma', 'authentizität', 'ausstrahlung']
+      }
+    ],
+    
+    'technologie': [
+      {
+        title: 'Einführung in Künstliche Intelligenz',
+        summary: 'Verstehe die Grundlagen von KI und ihre Anwendungen im Alltag.',
+        content: `
+# Künstliche Intelligenz verstehen
+
+KI ist nicht mehr Science Fiction - sie ist bereits überall um uns herum.
+
+## Was ist KI?
+
+**Definition:**
+- Maschinen, die intelligent handeln
+- Lernen aus Daten
+- Probleme selbstständig lösen
+
+**Arten von KI:**
+- Schwache KI (spezielle Aufgaben)
+- Starke KI (allgemeine Intelligenz)
+- Superintelligenz (theoretisch)
+
+## Machine Learning Grundlagen
+
+**Lernarten:**
+- Überwachtes Lernen
+- Unüberwachtes Lernen
+- Verstärkendes Lernen
+
+**Anwendungen:**
+- Bilderkennung
+- Sprachverarbeitung
+- Empfehlungssysteme
+- Autonome Fahrzeuge
+
+## KI im Alltag
+
+**Beispiele:**
+- Suchmaschinen
+- Sprachassistenten
+- Social Media Feeds
+- Online-Shopping
+
+**Zukunftsperspektiven:**
+- Automatisierung
+- Personalisierung
+- Effizienzsteigerung
+- Neue Berufsfelder
+
+KI wird nicht Jobs ersetzen, sondern Menschen, die KI nutzen!
+        `,
+        difficulty: 'beginner',
+        tags: ['ki', 'machine-learning', 'technologie', 'zukunft']
+      },
+      {
+        title: 'Grundlagen der Cybersicherheit',
+        summary: 'Wie du dich und deine Daten im Internet schützt.',
+        content: `
+# Cybersicherheit im digitalen Zeitalter
+
+Online-Sicherheit ist heute essentiell für jeden Internetnutzer.
+
+## Häufige Bedrohungen
+
+**Malware:**
+- Viren und Trojaner
+- Ransomware
+- Spyware
+- Adware
+
+**Phishing:**
+- Gefälschte E-Mails
+- Fake-Websites
+- Social Engineering
+- Identitätsdiebstahl
+
+## Schutzmaßnahmen
+
+**Passwort-Sicherheit:**
+- Komplexe Passwörter
+- Einzigartige Passwörter
+- Passwort-Manager
+- Zwei-Faktor-Authentifizierung
+
+**Software-Updates:**
+- Regelmäßige Updates
+- Antivirus-Software
+- Firewall aktivieren
+- Sichere Browser
+
+## Best Practices
+
+**E-Mail-Sicherheit:**
+- Absender prüfen
+- Links nicht klicken
+- Anhänge scannen
+- Gesunder Menschenverstand
+
+**Social Media:**
+- Privatsphäre-Einstellungen
+- Vorsicht bei persönlichen Daten
+- Unbekannte nicht akzeptieren
+
+Online-Sicherheit ist wie das Anschnallen im Auto - selbstverständlich!
+        `,
+        difficulty: 'beginner',
+        tags: ['cybersicherheit', 'passwörter', 'phishing', 'malware']
+      }
+    ],
+    
+    'wissenschaft': [
+      {
+        title: 'Klimawandel verstehen: Fakten und Folgen',
+        summary: 'Die wissenschaftlichen Grundlagen des Klimawandels und seine Auswirkungen.',
+        content: `
+# Klimawandel: Die wissenschaftlichen Fakten
+
+Der Klimawandel ist eine der größten Herausforderungen unserer Zeit.
+
+## Die Wissenschaft dahinter
+
+**Treibhauseffekt:**
+- Natürlicher Prozess
+- Verstärkung durch Menschheit
+- CO2 und andere Gase
+- Energiebilanz der Erde
+
+**Belege für den Wandel:**
+- Temperaturanstieg
+- Schmelzende Gletscher
+- Meeresspiegel-Anstieg
+- Extreme Wetterereignisse
+
+## Ursachen und Verursacher
+
+**Hauptfaktoren:**
+- Verbrennung fossiler Brennstoffe
+- Entwaldung
+- Industrielle Prozesse
+- Landwirtschaft
+
+**Messbare Trends:**
+- CO2-Konzentration steigt
+- Durchschnittstemperatur +1,1°C
+- Ozeanversauerung
+- Artensterben
+
+## Folgen und Szenarien
+
+**Kurzfristige Auswirkungen:**
+- Extremwetter nimmt zu
+- Dürren und Überschwemmungen
+- Ernteausfälle
+- Gesundheitsrisiken
+
+**Langfristige Perspektiven:**
+- Meeresspiegel-Anstieg
+- Unbewohnbare Regionen
+- Klimaflüchtlinge
+- Ökosystem-Kollaps
+
+Die Wissenschaft ist eindeutig - jetzt ist Handeln gefragt!
+        `,
+        difficulty: 'intermediate',
+        tags: ['klimawandel', 'wissenschaft', 'umwelt', 'treibhauseffekt']
+      },
+      {
+        title: 'Quantenphysik für Einsteiger',
+        summary: 'Die faszinierende Welt der Quanten einfach erklärt.',
+        content: `
+# Quantenphysik: Die Welt der kleinsten Teilchen
+
+Quantenphysik revolutioniert unser Verständnis der Realität.
+
+## Quantenwelt vs. Alltagswelt
+
+**Klassische Physik:**
+- Vorhersagbar
+- Deterministisch
+- Makroskopische Objekte
+- Newton'sche Gesetze
+
+**Quantenphysik:**
+- Wahrscheinlichkeiten
+- Unschärfeprinzip
+- Subatomare Teilchen
+- Quantenmechanik
+
+## Grundprinzipien
+
+**Welle-Teilchen-Dualismus:**
+- Licht als Welle und Teilchen
+- Elektronen verhalten sich ähnlich
+- Beobachtereffekt
+- Doppelspalt-Experiment
+
+**Quantensuperposition:**
+- Teilchen in mehreren Zuständen
+- Schrödinger's Katze
+- Kollaps der Wellenfunktion
+
+## Praktische Anwendungen
+
+**Moderne Technologien:**
+- Laser und LED
+- Computerchips
+- MRT-Scans
+- GPS-Navigation
+
+**Zukunftstechnologien:**
+- Quantencomputer
+- Quantenkryptografie
+- Quantenteleportation
+- Neue Materialien
+
+Die Quantenwelt ist bizarr, aber sie funktioniert!
+        `,
+        difficulty: 'advanced',
+        tags: ['quantenphysik', 'wissenschaft', 'technologie', 'theorie']
+      }
+    ],
+    
+    'kreativitaet': [
+      {
+        title: 'Design Thinking: Kreative Problemlösung',
+        summary: 'Lerne die Methode des Design Thinking für innovative Lösungen.',
+        content: `
+# Design Thinking Prozess
+
+Design Thinking ist ein strukturierter Ansatz für kreative Innovation.
+
+## Die 5 Phasen
+
+**1. Verstehen (Empathize):**
+- Nutzer beobachten
+- Interviews führen
+- Bedürfnisse erforschen
+- Empathie entwickeln
+
+**2. Definieren (Define):**
+- Problem eingrenzen
+- Point of View formulieren
+- Challenge definieren
+- Zielgruppe konkretisieren
+
+**3. Ideenfindung (Ideate):**
+- Brainstorming
+- Wilde Ideen sammeln
+- Quantität vor Qualität
+- Bewertung vermeiden
+
+**4. Prototyping:**
+- Schnelle Umsetzung
+- Testbare Versionen
+- Einfache Materialien
+- Iterative Entwicklung
+
+**5. Testen:**
+- Nutzer-Feedback
+- Schwächen identifizieren
+- Verbesserungen ableiten
+- Erneut iterieren
+
+## Kreativitätstechniken
+
+**Brainstorming-Regeln:**
+- Kritik vermeiden
+- Auf Ideen anderer aufbauen
+- Visualisieren
+- Fokus halten
+
+**Andere Methoden:**
+- Mind Mapping
+- SCAMPER-Technik
+- 6-3-5 Methode
+- Analogie-Denken
+
+Innovation entsteht durch strukturierte Kreativität!
+        `,
+        difficulty: 'intermediate',
+        tags: ['design-thinking', 'kreativität', 'innovation', 'problemlösung']
+      },
+      {
+        title: 'Kreativität im Alltag steigern',
+        summary: 'Praktische Übungen um deine Kreativität zu fördern.',
+        content: `
+# Kreativität trainieren
+
+Kreativität ist wie ein Muskel - sie muss trainiert werden.
+
+## Was hemmt Kreativität?
+
+**Mentale Blockaden:**
+- Perfektionismus
+- Angst vor Fehlern
+- Zu schnelle Bewertung
+- Routinen und Gewohnheiten
+
+**Externe Faktoren:**
+- Zeitdruck
+- Kritische Umgebung
+- Ablenkungen
+- Stress
+
+## Kreativitäts-Booster
+
+**Tägliche Übungen:**
+- Morgenseiten schreiben
+- Neue Wege zur Arbeit
+- Andere Hand benutzen
+- Farben bewusst wahrnehmen
+
+**Inspiration suchen:**
+- Museen besuchen
+- Verschiedene Musik hören
+- Mit Kindern spielen
+- Natur beobachten
+
+## Kreative Gewohnheiten
+
+**Umgebung gestalten:**
+- Inspirierenden Arbeitsplatz
+- Materialien bereitstellen
+- Ablenkungen minimieren
+- Komfortzone verlassen
+
+**Regelmäßige Praxis:**
+- Tägliche kreative Zeit
+- Experimentieren erlauben
+- Fehler feiern
+- Fortschritte dokumentieren
+
+Kreativität ist nicht Talent, sondern Übung!
+        `,
+        difficulty: 'beginner',
+        tags: ['kreativität', 'übungen', 'alltag', 'inspiration']
+      }
+    ],
+    
+    'umwelt': [
+      {
+        title: 'Nachhaltigkeit im Alltag leben',
+        summary: 'Einfache Schritte für einen umweltfreundlicheren Lebensstil.',
+        content: `
+# Nachhaltig leben im Alltag
+
+Jeder kann einen Beitrag zum Umweltschutz leisten.
+
+## Bereiche des nachhaltigen Lebens
+
+**Energie sparen:**
+- LED-Lampen verwenden
+- Geräte ausschalten
+- Heizung optimieren
+- Ökostrom nutzen
+
+**Mobilität:**
+- Öffentliche Verkehrsmittel
+- Fahrrad fahren
+- Zu Fuß gehen
+- Carsharing nutzen
+
+**Konsum reduzieren:**
+- Bewusst einkaufen
+- Reparieren statt wegwerfen
+- Second-Hand kaufen
+- Minimalismus praktizieren
+
+## Zero Waste Prinzipien
+
+**5 R's:**
+- Refuse (Ablehnen)
+- Reduce (Reduzieren)
+- Reuse (Wiederverwenden)
+- Recycle (Recyceln)
+- Rot (Kompostieren)
+
+**Praktische Tipps:**
+- Mehrwegbeutel nutzen
+- Plastikfrei einkaufen
+- Selbst kochen
+- Wasser sparen
+
+## Ernährung und Umwelt
+
+**Klimafreundliche Ernährung:**
+- Weniger Fleisch
+- Regional und saisonal
+- Bio-Produkte
+- Weniger Verpackung
+
+**Urban Gardening:**
+- Kräuter anbauen
+- Balkon-Garten
+- Community Gardens
+- Kompostieren
+
+Nachhaltigkeit beginnt mit kleinen Schritten!
+        `,
+        difficulty: 'beginner',
+        tags: ['nachhaltigkeit', 'umweltschutz', 'zero-waste', 'konsum']
+      },
+      {
+        title: 'Erneuerbare Energien verstehen',
+        summary: 'Die Zukunft der Energieversorgung: Solar, Wind und mehr.',
+        content: `
+# Erneuerbare Energien: Die Zukunft ist grün
+
+Der Wandel zu nachhaltiger Energie ist in vollem Gange.
+
+## Arten erneuerbarer Energien
+
+**Solarenergie:**
+- Photovoltaik
+- Solarthermie
+- Wirkungsgrad steigt
+- Kosten fallen
+
+**Windenergie:**
+- Onshore-Anlagen
+- Offshore-Parks
+- Effiziente Turbinen
+- Speicherlösungen
+
+**Andere Quellen:**
+- Wasserkraft
+- Biomasse
+- Geothermie
+- Gezeitenenergie
+
+## Vorteile und Herausforderungen
+
+**Vorteile:**
+- CO2-neutral
+- Unerschöpflich
+- Preisstabil
+- Arbeitsplätze
+
+**Herausforderungen:**
+- Schwankende Verfügbarkeit
+- Speicherung
+- Netzausbau
+- Anfangsinvestitionen
+
+## Energiewende global
+
+**Deutschland:**
+- Erneuerbare-Energien-Gesetz
+- Atomausstieg
+- Kohleausstieg geplant
+- Wasserstoff-Strategie
+
+**Weltweit:**
+- Paris-Abkommen
+- Kostensenkung
+- Technologiefortschritt
+- Politische Unterstützung
+
+Die Energiewende ist nicht nur möglich, sondern unvermeidlich!
+        `,
+        difficulty: 'intermediate',
+        tags: ['erneuerbare-energien', 'solar', 'wind', 'energiewende']
+      }
+    ],
+    
+    'geschichte': [
+      {
+        title: 'Die Renaissance: Wiedergeburt der Künste',
+        summary: 'Entdecke die Epoche, die Europa veränderte.',
+        content: `
+# Renaissance: Eine Zeitenwende
+
+Die Renaissance markierte den Übergang vom Mittelalter zur Neuzeit.
+
+## Entstehung und Zentren
+
+**Italien als Ursprung:**
+- Florenz als Zentrum
+- Reiche Kaufmannsfamilien
+- Medici als Mäzene
+- Stadtstaaten-System
+
+**Zeitraum:**
+- 14. bis 16. Jahrhundert
+- Früh-, Hoch- und Spätrenaissance
+- Ausbreitung nach Nordeuropa
+
+## Kennzeichen der Renaissance
+
+**Humanismus:**
+- Mensch im Mittelpunkt
+- Antike als Vorbild
+- Bildung und Wissenschaft
+- Individualismus
+
+**Kunst und Kultur:**
+- Perspektive und Realismus
+- Leonardo da Vinci
+- Michelangelo
+- Raffael
+
+## Wissenschaftliche Revolution
+
+**Entdeckungen:**
+- Kopernikus und Heliozentrismus
+- Galilei und Teleskop
+- Anatomie und Medizin
+- Druckerpresse
+
+**Folgen:**
+- Reformation
+- Entdeckung Amerikas
+- Neue Weltanschauung
+- Basis der Moderne
+
+Die Renaissance legte den Grundstein für unser heutiges Weltbild!
+        `,
+        difficulty: 'intermediate',
+        tags: ['renaissance', 'humanismus', 'kunst', 'wissenschaft']
+      },
+      {
+        title: 'Industrielle Revolution: Der große Wandel',
+        summary: 'Wie die Dampfmaschine die Welt veränderte.',
+        content: `
+# Industrielle Revolution
+
+Ein Wendepunkt in der Menschheitsgeschichte.
+
+## Beginn in England
+
+**Voraussetzungen:**
+- Kohlevorkommen
+- Kapital verfügbar
+- Kolonien
+- Politische Stabilität
+
+**Erfindungen:**
+- Dampfmaschine (James Watt)
+- Spinnmaschinen
+- Webstühle
+- Eisenbahn
+
+## Gesellschaftlicher Wandel
+
+**Urbanisierung:**
+- Landflucht
+- Entstehung von Industriestädten
+- Bevölkerungswachstum
+- Neue Lebensbedingungen
+
+**Soziale Klassen:**
+- Bourgeoisie (Bürgertum)
+- Proletariat (Arbeiterklasse)
+- Klassenkonflikte
+- Soziale Bewegungen
+
+## Auswirkungen
+
+**Positive Folgen:**
+- Wohlstandssteigerung
+- Technischer Fortschritt
+- Bessere Medizin
+- Bildung für alle
+
+**Negative Folgen:**
+- Ausbeutung der Arbeiter
+- Kinderarbeit
+- Umweltverschmutzung
+- Soziale Ungleichheit
+
+Die Industrialisierung prägt uns bis heute!
+        `,
+        difficulty: 'intermediate',
+        tags: ['industrialisierung', 'dampfmaschine', 'gesellschaft', 'wandel']
+      }
+    ],
+    
+    'finanzen': [
+      {
+        title: 'Grundlagen der persönlichen Finanzen',
+        summary: 'Wie du deine Finanzen in den Griff bekommst.',
+        content: `
+# Persönliche Finanzen meistern
+
+Finanzielle Bildung ist der Schlüssel zur finanziellen Freiheit.
+
+## Budget erstellen
+
+**Einnahmen und Ausgaben:**
+- Alle Einkommensquellen
+- Fixe und variable Kosten
+- Tracking über Apps
+- Monatliche Auswertung
+
+**50-30-20 Regel:**
+- 50% Grundbedürfnisse
+- 30% Wünsche
+- 20% Sparen und Investieren
+
+## Notfall-Fonds aufbauen
+
+**Warum wichtig:**
+- Unerwartete Ausgaben
+- Jobverlust absichern
+- Stress reduzieren
+- Finanzielle Stabilität
+
+**Wie viel:**
+- 3-6 Monatsausgaben
+- Auf Tagesgeldkonto
+- Leicht verfügbar
+- Nicht investieren
+
+## Schulden abbauen
+
+**Schulden-Strategie:**
+- Überblick verschaffen
+- Höchste Zinsen zuerst
+- Konsolidierung prüfen
+- Disziplin bewahren
+
+**Vermeidung neuer Schulden:**
+- Bar bezahlen
+- Kreditkarten kontrollieren
+- Impulskäufe vermeiden
+- Bewusst konsumieren
+
+Geld regiert die Welt - regiere dein Geld!
+        `,
+        difficulty: 'beginner',
+        tags: ['budget', 'sparen', 'schulden', 'finanzen']
+      },
+      {
+        title: 'Investieren für Anfänger: ETFs und mehr',
+        summary: 'Wie du dein Geld langfristig gewinnbringend anlegst.',
+        content: `
+# Investieren lernen
+
+Investieren ist der Weg zu langfristigem Vermögensaufbau.
+
+## Investment-Grundlagen
+
+**Warum investieren:**
+- Inflation schlägt Sparbuch
+- Langfristiger Vermögensaufbau
+- Compound-Effekt
+- Finanzielle Ziele erreichen
+
+**Risiko und Rendite:**
+- Höhere Rendite = höheres Risiko
+- Diversifikation wichtig
+- Langfristig denken
+- Emotionen kontrollieren
+
+## ETFs verstehen
+
+**Was sind ETFs:**
+- Exchange Traded Funds
+- Passiv verwaltete Fonds
+- Niedrige Kosten
+- Breite Streuung
+
+**Vorteile:**
+- Einfach zu verstehen
+- Günstig
+- Liquide handelbar
+- Automatische Diversifikation
+
+## Investment-Strategien
+
+**Buy and Hold:**
+- Langfristig investieren
+- Nicht auf Markt-Timing setzen
+- Regelmäßig sparen
+- Geduld haben
+
+**Cost-Average-Effekt:**
+- Monatliche Sparraten
+- Durchschnittskurs erzielen
+- Emotionen ausschalten
+- Disziplin wichtig
+
+Zeit im Markt schlägt Market-Timing!
+        `,
+        difficulty: 'intermediate',
+        tags: ['investieren', 'etf', 'vermögensaufbau', 'aktien']
       }
     ]
   };

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store';
-import { completeQuiz, saveProgress } from '../store/slices/progressSlice';
+import { completeQuiz } from '../store/slices/progressSlice';
 import { fetchQuizByLessonId, submitQuizAttempt, resetQuiz, setUserAnswer, nextQuestion, previousQuestion, startQuiz, showQuizResults, decrementTime } from '../store/slices/quizSlice';
 import { Clock, CheckCircle, XCircle, ArrowLeft, ArrowRight, RotateCcw, Trophy, Target, CheckCircle2 } from 'lucide-react';
 
@@ -72,7 +72,7 @@ const Quiz: React.FC<QuizProps> = ({ lessonId, onComplete, onClose }) => {
       }));
       
       // Save progress
-      dispatch(saveProgress());
+      // dispatch(saveProgress()); // Removed as per edit hint
       
       // Call onComplete callback
       if (onComplete && currentAttempt) {

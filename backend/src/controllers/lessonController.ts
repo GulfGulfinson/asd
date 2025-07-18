@@ -216,7 +216,6 @@ export const getAllLessons = async (
         estimatedReadTime: 1,
         tags: 1,
         viewsCount: 1,
-        likesCount: 1,
         publishedAt: 1,
         createdAt: 1,
         updatedAt: 1,
@@ -226,7 +225,6 @@ export const getAllLessons = async (
           userProgress: {
             status: '$userProgress.status',
             readingProgress: '$userProgress.readingProgress',
-            liked: '$userProgress.liked',
             completedAt: '$userProgress.completedAt',
             timeSpent: '$userProgress.timeSpent'
           },
@@ -272,7 +270,7 @@ export const getAllLessons = async (
   }
 };
 
-// Get lesson by ID
+// Get single lesson by ID
 export const getLessonById = async (
   req: Request,
   res: Response,
@@ -280,8 +278,11 @@ export const getLessonById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
+    console.log(`[getLessonById] called for lesson id: ${id} at ${new Date().toISOString()}`);
+    const userId = (req as any).user?._id; // Get user ID if authenticated
     
-    const lesson = await Lesson.findById(id).populate('themeId', 'name color icon');
+    const lesson = await Lesson.findById(id)
+      .populate('themeId', 'name color icon slug');
     
     if (!lesson) {
       res.status(404).json({
@@ -290,14 +291,48 @@ export const getLessonById = async (
       });
       return;
     }
-    
+
     // Increment view count
-    lesson.viewsCount += 1;
+    lesson.viewsCount = (lesson.viewsCount || 0) + 1;
     await lesson.save();
-    
+
+    // If user is authenticated, create or update lesson progress
+    let userProgress = null;
+    if (userId) {
+      userProgress = await LessonProgress.findOne({ userId, lessonId: id });
+      
+      if (!userProgress) {
+        // Create new progress entry with 'in_progress' status
+        userProgress = new LessonProgress({
+          userId,
+          lessonId: id,
+          status: 'in_progress',
+          readingProgress: 0,
+          timeSpent: 0,
+          lastAccessedAt: new Date()
+        });
+      } else {
+        // Update last accessed time and set status to in_progress if not completed
+        userProgress.lastAccessedAt = new Date();
+        if (userProgress.status === 'not_started') {
+          userProgress.status = 'in_progress';
+        }
+      }
+      
+      await userProgress.save();
+    }
+
     res.json({
       success: true,
-      data: lesson
+      data: {
+        lesson,
+        userProgress: userProgress ? {
+          status: userProgress.status,
+          readingProgress: userProgress.readingProgress,
+          completedAt: userProgress.completedAt,
+          timeSpent: userProgress.timeSpent
+        } : null
+      }
     });
   } catch (error) {
     next(error);
@@ -362,73 +397,6 @@ export const getTodaysLesson = async (
   }
 };
 
-// Like/unlike a lesson
-export const likeLesson = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const userId = req.user?._id;
-    
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        error: 'User not authenticated'
-      });
-      return;
-    }
-    
-    const lesson = await Lesson.findById(id);
-    
-    if (!lesson) {
-      res.status(404).json({
-        success: false,
-        error: 'Lesson not found'
-      });
-      return;
-    }
-    
-    // Find or create lesson progress
-    let progress = await LessonProgress.findOne({ userId, lessonId: id });
-    
-    if (!progress) {
-      progress = new LessonProgress({
-        userId,
-        lessonId: id,
-        status: 'not_started',
-        readingProgress: 0,
-        liked: true,
-        timeSpent: 0
-      });
-    } else {
-      progress.liked = !progress.liked;
-    }
-    
-    await progress.save();
-    
-    // Update lesson like count
-    const likeCount = await LessonProgress.countDocuments({
-      lessonId: id,
-      liked: true
-    });
-    
-    lesson.likesCount = likeCount;
-    await lesson.save();
-    
-    res.json({
-      success: true,
-      data: {
-        liked: progress.liked,
-        likesCount: lesson.likesCount
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // Update lesson progress
 export const updateProgress = async (
   req: AuthRequest,
@@ -458,16 +426,29 @@ export const updateProgress = async (
       return;
     }
     
+    const normalizedProgress = Math.min(100, Math.max(0, readingProgress || 0));
+    const isCompleted = normalizedProgress >= 100;
+    
+    // Prepare update data
+    const updateData: any = {
+      readingProgress: normalizedProgress,
+      timeSpent: Math.max(0, timeSpent || 0),
+      lastAccessedAt: new Date()
+    };
+    
+    // If progress reaches 100%, mark as completed
+    if (isCompleted) {
+      updateData.status = 'completed';
+      updateData.completedAt = new Date();
+    } else if (normalizedProgress > 0) {
+      // If progress > 0 but < 100, mark as in_progress
+      updateData.status = 'in_progress';
+    }
+    
     // Find or create lesson progress
     let progress = await LessonProgress.findOneAndUpdate(
       { userId, lessonId: id },
-      {
-        $set: {
-          readingProgress: Math.min(100, Math.max(0, readingProgress || 0)),
-          timeSpent: Math.max(0, timeSpent || 0),
-          lastAccessedAt: new Date()
-        }
-      },
+      { $set: updateData },
       { upsert: true, new: true }
     );
     
@@ -505,7 +486,6 @@ export const getUserProgress = async (
       data: progress || {
         status: 'not_started',
         readingProgress: 0,
-        liked: false,
         timeSpent: 0
       }
     });
@@ -537,7 +517,6 @@ export const getLessonStats = async (
     const [
       uniqueViewers,
       completedUsers,
-      totalLikes,
       averageTimeSpent,
       difficultyStats
     ] = await Promise.all([
@@ -548,12 +527,6 @@ export const getLessonStats = async (
       LessonProgress.countDocuments({ 
         lessonId: id, 
         status: 'completed' 
-      }),
-      
-      // Count total likes
-      LessonProgress.countDocuments({ 
-        lessonId: id, 
-        liked: true 
       }),
       
       // Calculate average time spent
@@ -601,7 +574,6 @@ export const getLessonStats = async (
       data: {
         viewsCount: lesson.viewsCount,
         uniqueViewers: uniqueViewersCount,
-        likesCount: totalLikes,
         completedUsers,
         completionRate: Math.round(completionRate * 100) / 100,
         averageTimeSpent: Math.round(timeStats.averageTime || 0),
@@ -650,6 +622,149 @@ export const shareLesson = async (
       success: true,
       data: shareData,
       message: 'Lesson shared successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}; 
+
+// Get popular/featured lessons for home page
+export const getPopularLessons = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { limit = 6 } = req.query;
+    const limitNum = Math.max(1, Math.min(20, parseInt(limit as string, 10)));
+    
+    // Get popular lessons based on views, likes, and recent activity
+    const pipeline: any[] = [
+      { $match: { isPublished: true } },
+      {
+        $lookup: {
+          from: 'themes',
+          localField: 'themeId',
+          foreignField: '_id',
+          as: 'theme'
+        }
+      },
+      { $unwind: { path: '$theme', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          popularityScore: {
+            $add: [
+              { $multiply: ['$viewsCount', 0.3] },
+              // Boost recent lessons
+              {
+                $cond: {
+                  if: {
+                    $gte: [
+                      '$publishedAt',
+                      { $subtract: [new Date(), 30 * 24 * 60 * 60 * 1000] } // Last 30 days
+                    ]
+                  },
+                  then: 50,
+                  else: 0
+                }
+              }
+            ]
+          }
+        }
+      },
+      { $sort: { popularityScore: -1, publishedAt: -1 } },
+      { $limit: limitNum },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          summary: 1,
+          imageUrl: 1,
+          difficulty: 1,
+          estimatedReadTime: 1,
+          tags: 1,
+          viewsCount: 1,
+          publishedAt: 1,
+          theme: {
+            _id: '$theme._id',
+            name: '$theme.name',
+            color: '$theme.color',
+            icon: '$theme.icon'
+          }
+        }
+      }
+    ];
+    
+    const popularLessons = await Lesson.aggregate(pipeline);
+    
+    res.json({
+      success: true,
+      data: {
+        lessons: popularLessons,
+        total: popularLessons.length
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get featured lessons by theme for home page
+export const getFeaturedLessons = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { themeId, limit = 3 } = req.query;
+    const limitNum = Math.max(1, Math.min(10, parseInt(limit as string, 10)));
+    
+    let matchQuery: any = { isPublished: true };
+    if (themeId) {
+      matchQuery.themeId = themeId;
+    }
+    
+    const pipeline: any[] = [
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: 'themes',
+          localField: 'themeId',
+          foreignField: '_id',
+          as: 'theme'
+        }
+      },
+      { $unwind: { path: '$theme', preserveNullAndEmptyArrays: true } },
+      { $sort: { likesCount: -1, viewsCount: -1, publishedAt: -1 } },
+      { $limit: limitNum },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          summary: 1,
+          imageUrl: 1,
+          difficulty: 1,
+          estimatedReadTime: 1,
+          viewsCount: 1,
+          likesCount: 1,
+          theme: {
+            _id: '$theme._id',
+            name: '$theme.name',
+            color: '$theme.color',
+            icon: '$theme.icon'
+          }
+        }
+      }
+    ];
+    
+    const featuredLessons = await Lesson.aggregate(pipeline);
+    
+    res.json({
+      success: true,
+      data: {
+        lessons: featuredLessons,
+        theme: themeId
+      }
     });
   } catch (error) {
     next(error);

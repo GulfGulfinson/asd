@@ -21,59 +21,20 @@ export interface ShareData {
 
 export const useLessonInteractions = (lessonId: string) => {
   const [stats, setStats] = useState<LessonStats | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isLiking, setIsLiking] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [likeAnimation, setLikeAnimation] = useState(false);
-  const [statsLoading, setStatsLoading] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
 
   // Fetch lesson statistics
   const fetchStats = useCallback(async () => {
     if (!lessonId) return;
     
-    setStatsLoading(true);
     try {
       const response = await lessonsAPI.getLessonStats(lessonId);
       setStats(response.data);
     } catch (error) {
       console.error('Failed to fetch lesson stats:', error);
-    } finally {
-      setStatsLoading(false);
     }
   }, [lessonId]);
-
-  // Like/unlike lesson with animation
-  const toggleLike = useCallback(async () => {
-    if (isLiking) return;
-    
-    setIsLiking(true);
-    setLikeAnimation(true);
-    
-    try {
-      const response = await lessonsAPI.likeLesson(lessonId);
-      setIsLiked(response.data.liked);
-      
-      // Update stats optimistically
-      if (stats) {
-        setStats(prev => prev ? {
-          ...prev,
-          likesCount: response.data.likesCount
-        } : null);
-      }
-      
-      // Animation cleanup
-      setTimeout(() => {
-        setLikeAnimation(false);
-      }, 600);
-      
-    } catch (error) {
-      console.error('Failed to like lesson:', error);
-      setLikeAnimation(false);
-    } finally {
-      setIsLiking(false);
-    }
-  }, [lessonId, isLiking, stats]);
 
   // Share lesson
   const shareLesson = useCallback(async (platform: string = 'link'): Promise<ShareData | null> => {
@@ -163,13 +124,6 @@ export const useLessonInteractions = (lessonId: string) => {
   return {
     // Stats
     stats,
-    statsLoading,
-    
-    // Like functionality
-    isLiked,
-    isLiking,
-    likeAnimation,
-    toggleLike,
     
     // Share functionality
     isSharing,

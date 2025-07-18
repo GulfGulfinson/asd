@@ -61,6 +61,20 @@ const Navbar: React.FC = () => {
                 </Link>
               );
             })}
+            {/* Admin link for admin users */}
+            {isAuthenticated && user?.role === 'admin' && (
+              <Link
+                to="/admin"
+                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname.startsWith('/admin')
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                }`}
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Admin</span>
+              </Link>
+            )}
           </div>
 
           {/* User Actions */}
@@ -142,6 +156,21 @@ const Navbar: React.FC = () => {
                 </Link>
               );
             })}
+            {/* Admin link for admin users (mobile) */}
+            {isAuthenticated && user?.role === 'admin' && (
+              <Link
+                to="/admin"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  location.pathname.startsWith('/admin')
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                }`}
+              >
+                <LayoutDashboard className="h-5 w-5" />
+                <span>Admin</span>
+              </Link>
+            )}
 
             {isAuthenticated ? (
               <>

@@ -82,19 +82,21 @@ export const authorize = (...roles: string[]) => {
       return;
     }
 
-    // For now, we'll implement a simple role check
-    // In the future, this could be expanded with a proper role system
-    const userRole = req.user.subscription.plan === 'premium' ? 'premium' : 'free';
-    
-    if (!roles.includes(userRole) && !roles.includes('any')) {
-      res.status(403).json({
-        success: false,
-        error: 'Access denied. Insufficient permissions.',
-      });
-      return;
+    // Support admin role
+    if (roles.includes('admin') && req.user.role === 'admin') {
+      return next();
     }
 
-    next();
+    // Backward compatibility: support premium/free
+    const userRole = req.user.subscription.plan === 'premium' ? 'premium' : 'free';
+    if (roles.includes(userRole) || roles.includes('any')) {
+      return next();
+    }
+
+    res.status(403).json({
+      success: false,
+      error: 'Access denied. Insufficient permissions.',
+    });
   };
 };
 
