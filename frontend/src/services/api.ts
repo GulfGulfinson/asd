@@ -248,4 +248,11 @@ export const userAPI = {
   },
 };
 
+export const adminAPI = {
+  getStats: async () => {
+    const response = await api.get('/admin/stats');
+    return response.data;
+  },
+};
+
 export default api;

@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { Lesson } from '../models';
+import { User } from '../models/User';
+import { Theme } from '../models/Theme';
+import { Quiz } from '../models/Quiz';
 import { 
   adminListQuizzes, 
   adminGetQuiz, 
@@ -79,6 +82,20 @@ router.delete('/quizzes/:id', authenticate, authorize('admin'), adminDeleteQuiz)
 // Placeholders for themes management
 router.get('/themes', authenticate, authorize('admin'), (_req, res) => {
   res.json({ success: true, message: 'List of themes (admin only)' });
+});
+
+router.get('/stats', authenticate, authorize('admin'), async (_req, res, next) => {
+  try {
+    const [userCount, lessonCount, quizCount, themeCount] = await Promise.all([
+      User.countDocuments(),
+      Lesson.countDocuments(),
+      Quiz.countDocuments(),
+      Theme.countDocuments(),
+    ]);
+    res.json({ success: true, data: { userCount, lessonCount, quizCount, themeCount } });
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router; 
